@@ -1,36 +1,45 @@
-# EARTH FLIGHT v1.3.3 — Ace Horizon
+# EARTH FLIGHT v1.3.4 — Ace Horizon
 
-Real-Earth Cesium flight combat. Continuous release train.
+Real-Earth CesiumJS flight combat. Continuous release train 2026.
 
-## Run
+## Play
 
-**Quick play:** open [`play.html`](./play.html) in a static server (full game is a single HTML file).
+Open `index.html` or `play.html` with a static server:
 
 ```bash
-npm install && npx vite --host 127.0.0.1 --port 5173
-# or: npx serve .
+npx serve .
+# or
+python3 -m http.server 8080
 ```
-Cesium ion token required (paste on start screen — free at https://ion.cesium.com/tokens).
 
-## 1.3.3 — Combat feel + lock skill + camera
-- **Progressive missile lock**: nose-cone (~22°) build-up, LOCKING % → hard LOCK at 82%
-- **WAVE CLEAR breathing**: 1.15s hold + banner before next spawn
-- **Tighter combat chase cam**: dist 42, height 9
-- **Lock box**: corner brackets + live KM range
-- **Mission counter**: 적기 n/goal on HUD
-- **Closer enemy merge**: spawn ~260m base
-- **Afterburner FOV punch** + stronger boost vignette
-- Keeps 1.3.2 hard neutral lock (left-drift fix)
+Cesium Ion token required (free at https://ion.cesium.com/tokens). Paste on the start screen (saved to localStorage).
 
-## Stack
-- 6 craft + unique skills · Guns · Homing missiles · Ranked waves · Boss · Combos
-- Gold / Diamonds / Pilot XP / Potions · Mobile · Solar noon
+## What’s new in 1.3.4
+
+- **Cinematic prologue**: orbit dive + bilingual narrative before flight
+- Daegu start location
+- Themed branding (favicon + title)
+- Progressive lock corner colors (cyan → gold)
+- Full game now properly in the public repo
+
+## Core features (from 1.3.3)
+
+- Progressive missile lock (≈22° nose-cone, LOCKING % → hard LOCK at 82%)
+- WAVE CLEAR breathing (1.15s) + ranked waves
+- 6 unique crafts with skills (afterburn, evade, plate, double missile, cloak, repair)
+- Guns + homing missiles, combos, boss waves
+- Gold / Diamonds / Pilot XP / Potions
+- Mobile virtual stick + full HUD
+- Solar noon lighting, first/third person camera
 
 ## Controls
+
 A/D · W/S · Space · M · F · 1 · P · C · virtual stick / mouse drag
 
-## Train
-1.3.3 ← 1.3.2 ← 1.3.1 ← 1.3.0 ← …
+## Continuous Release Train
+
+1.3.4 ← 1.3.3 ← 1.3.2 ← …
 
 ## License
+
 MIT
