@@ -1,0 +1,17 @@
+{
+  "name": "EARTH FLIGHT",
+  "install": "npm install",
+  "terminals": [
+    {
+      "name": "vite-dev",
+      "command": "npm run dev -- --host 0.0.0.0 --port 5173",
+      "description": "Vite dev server for the EARTH FLIGHT game (index.html / play.html). Open the forwarded port 5173 in a browser, then paste a free Cesium Ion token on the start screen to fly."
+    }
+  ],
+  "ports": [
+    {
+      "name": "vite",
+      "port": 5173
+    }
+  ]
+}
