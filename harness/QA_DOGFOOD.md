@@ -19,7 +19,7 @@ Convert EARTH FLIGHT into a **world-travel + live fighter-jet combat** web game 
 | P2 | No missile warning / flares |
 | P2 | Point bullets, no bloom/clouds/trails, weak HUD |
 
-## v2.0.0 acceptance
+## v2.0.1 acceptance
 
 1. Playable **without** an ion token (Esri World Imagery globe). Optional token upgrades photorealistic 3D cities.
 2. **World Circuit** campaign: 12 theaters Seoul → Sydney with transit cinematics.
@@ -38,4 +38,29 @@ npm run qa           # orchestrator once
 npm run harness      # supervisor + orchestrator heartbeat
 ```
 
-Open `/?qa=1` to skip the hangar and start Seoul combat with the harness dock.
+## v2.0.0 browser dogfood (post-patch)
+
+| Check | Result |
+| --- | --- |
+| Hangar living Earth (Esri globe, no token) | PASS |
+| Theater chips fly camera Seoul → Tokyo → NYC | PASS |
+| `/?qa=1` Seoul combat boot | PASS |
+| Player tapered fighter visible in 3rd person | PASS |
+| Enemy callsigns + closer bandits | PASS |
+| Player yellow tracers / enemy return fire | PASS |
+| A/D bank, FIRE not covered by skill stack | PASS |
+| Orchestrator `npm run qa` | PASS |
+
+Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
+
+## v2.0.1 patch loop (graphics / play)
+
+| Check | Result |
+| --- | --- |
+| Lofted fuselage + craft variants | pending browser |
+| Dual-cannon tracer streaks + missile dart | pending browser |
+| Visible flares decoy missiles | pending browser |
+| Radar top-left, not covering FIRE | pending browser |
+| Adaptive quality steps down if FPS < 22 | pending browser |
+| Audio unlock on first gesture | pending browser |
+

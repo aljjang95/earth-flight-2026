@@ -1,5 +1,16 @@
 const cache = new Map<string, string>();
 
+export type JetVariant =
+  | "sparrow"
+  | "kestrel"
+  | "harrier"
+  | "viper"
+  | "wraith"
+  | "aegis"
+  | "bandit"
+  | "ace"
+  | "leader";
+
 function addTri(
   pos: number[],
   nrm: number[],
@@ -68,29 +79,65 @@ function addBox(
   }
 }
 
+function addLoft(
+  pos: number[],
+  nrm: number[],
+  idx: number[],
+  stations: Array<{ z: number; rx: number; ry: number; cy?: number }>,
+  segs = 12,
+): void {
+  const rings: number[][][] = [];
+  for (const s of stations) {
+    const cy = s.cy ?? 0;
+    const ring: number[][] = [];
+    for (let i = 0; i < segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      ring.push([Math.cos(a) * s.rx, cy + Math.sin(a) * s.ry, s.z]);
+    }
+    rings.push(ring);
+  }
+  for (let i = 0; i < rings.length - 1; i++) {
+    for (let j = 0; j < segs; j++) {
+      const j2 = (j + 1) % segs;
+      addTri(pos, nrm, idx, rings[i][j], rings[i][j2], rings[i + 1][j2]);
+      addTri(pos, nrm, idx, rings[i][j], rings[i + 1][j2], rings[i + 1][j]);
+    }
+  }
+  const first = rings[0];
+  const last = rings[rings.length - 1];
+  const c0 = [0, stations[0].cy ?? 0, stations[0].z];
+  const c1 = [0, stations[stations.length - 1].cy ?? 0, stations[stations.length - 1].z];
+  for (let j = 0; j < segs; j++) {
+    const j2 = (j + 1) % segs;
+    addTri(pos, nrm, idx, c0, first[j2], first[j]);
+    addTri(pos, nrm, idx, c1, last[j], last[j2]);
+  }
+}
+
 function addSweptWing(
   pos: number[],
   nrm: number[],
   idx: number[],
   side: number,
+  tipX: number,
+  rootLE: number,
+  tipLE: number,
+  tipTE: number,
 ): void {
-  const y0 = -0.04,
-    y1 = 0.1;
-  const rootX = 0.45 * side;
-  const tipX = 5.6 * side;
-  const rootLE = 2.4,
-    rootTE = 0.15;
-  const tipLE = 0.15,
-    tipTE = -1.15;
+  const y0 = -0.05,
+    y1 = 0.09;
+  const rootX = 0.42 * side;
+  const tx = tipX * side;
+  const rootTE = 0.2;
   const p = [
     [rootX, y0, rootTE],
     [rootX, y0, rootLE],
-    [tipX, y0, tipLE],
-    [tipX, y0, tipTE],
+    [tx, y0, tipLE],
+    [tx, y0, tipTE],
     [rootX, y1, rootTE],
     [rootX, y1, rootLE],
-    [tipX, y1, tipLE],
-    [tipX, y1, tipTE],
+    [tx, y1, tipLE],
+    [tx, y1, tipTE],
   ];
   const faces = [
     [0, 1, 2, 3],
@@ -106,6 +153,27 @@ function addSweptWing(
   }
 }
 
+function addDeltaWing(pos: number[], nrm: number[], idx: number[], side: number): void {
+  const y0 = -0.04,
+    y1 = 0.08;
+  const p = [
+    [0.35 * side, y0, 3.4],
+    [0.4 * side, y0, -4.8],
+    [5.4 * side, y0, -3.6],
+    [0.35 * side, y1, 3.4],
+    [0.4 * side, y1, -4.8],
+    [5.4 * side, y1, -3.6],
+  ];
+  addTri(pos, nrm, idx, p[0], p[1], p[2]);
+  addTri(pos, nrm, idx, p[3], p[5], p[4]);
+  addTri(pos, nrm, idx, p[0], p[2], p[5]);
+  addTri(pos, nrm, idx, p[0], p[5], p[3]);
+  addTri(pos, nrm, idx, p[1], p[4], p[5]);
+  addTri(pos, nrm, idx, p[1], p[5], p[2]);
+  addTri(pos, nrm, idx, p[0], p[3], p[4]);
+  addTri(pos, nrm, idx, p[0], p[4], p[1]);
+}
+
 function toB64(bytes: Uint8Array): string {
   let s = "";
   const chunk = 0x8000;
@@ -115,28 +183,19 @@ function toB64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-/** Low-poly fighter in glTF space (Y up, Z forward). */
-export function jetModelUri(cssColor: string): string {
-  const hit = cache.get(cssColor);
-  if (hit) return hit;
+function boundsOf(pos: number[]): { min: number[]; max: number[] } {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < pos.length; i += 3) {
+    for (let k = 0; k < 3; k++) {
+      min[k] = Math.min(min[k], pos[i + k]);
+      max[k] = Math.max(max[k], pos[i + k]);
+    }
+  }
+  return { min, max };
+}
 
-  const pos: number[] = [];
-  const nrm: number[] = [];
-  const idx: number[] = [];
-
-  addBox(pos, nrm, idx, 0, 0.12, 0.2, 1.05, 0.78, 10.4);
-  addBox(pos, nrm, idx, 0, 0.08, 6.05, 0.62, 0.48, 2.4);
-  addBox(pos, nrm, idx, 0, 0.18, -5.3, 0.55, 0.42, 1.8);
-  addBox(pos, nrm, idx, 0, 0.62, 2.15, 0.58, 0.38, 2.1);
-  addSweptWing(pos, nrm, idx, 1);
-  addSweptWing(pos, nrm, idx, -1);
-  addBox(pos, nrm, idx, 0, 1.35, -4.4, 0.12, 1.7, 1.6);
-  addBox(pos, nrm, idx, 0.95, 0.22, -4.3, 1.9, 0.1, 1.05);
-  addBox(pos, nrm, idx, -0.95, 0.22, -4.3, 1.9, 0.1, 1.05);
-  addBox(pos, nrm, idx, 0.7, -0.15, 1.4, 0.55, 0.38, 2.6);
-  addBox(pos, nrm, idx, -0.7, -0.15, 1.4, 0.55, 0.38, 2.6);
-  addBox(pos, nrm, idx, 0, -0.02, -6.15, 0.42, 0.32, 0.7);
-
+function packGltf(pos: number[], nrm: number[], idx: number[], color: number[], extras: Record<string, unknown>): string {
   const pArr = new Float32Array(pos);
   const nArr = new Float32Array(nrm);
   const iArr = new Uint16Array(idx);
@@ -148,14 +207,10 @@ export function jetModelUri(cssColor: string): string {
   new Uint8Array(buf, 0, pBytes).set(new Uint8Array(pArr.buffer));
   new Uint8Array(buf, pBytes, nBytes).set(new Uint8Array(nArr.buffer));
   new Uint8Array(buf, iOff + pad).set(new Uint8Array(iArr.buffer));
-
-  const hex = cssColor.replace("#", "");
-  const r = parseInt(hex.slice(0, 2), 16) / 255;
-  const g = parseInt(hex.slice(2, 4), 16) / 255;
-  const b = parseInt(hex.slice(4, 6), 16) / 255;
-
+  const { min, max } = boundsOf(pos);
   const gltf = {
     asset: { version: "2.0", generator: "ace-horizon-jet" },
+    extras,
     scene: 0,
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0, name: "Fighter" }],
@@ -174,11 +229,11 @@ export function jetModelUri(cssColor: string): string {
       {
         name: "skin",
         pbrMetallicRoughness: {
-          baseColorFactor: [r * 0.55 + 0.12, g * 0.55 + 0.12, b * 0.55 + 0.12, 1],
-          metallicFactor: 0.82,
-          roughnessFactor: 0.28,
+          baseColorFactor: [color[0], color[1], color[2], 1],
+          metallicFactor: 0.78,
+          roughnessFactor: 0.32,
         },
-        emissiveFactor: [r * 0.08, g * 0.08, b * 0.1],
+        emissiveFactor: [color[0] * 0.12, color[1] * 0.1, color[2] * 0.14],
         doubleSided: true,
       },
     ],
@@ -188,8 +243,8 @@ export function jetModelUri(cssColor: string): string {
         componentType: 5126,
         count: pos.length / 3,
         type: "VEC3",
-        max: [6, 2.3, 7.3],
-        min: [-6, -0.4, -6.6],
+        max,
+        min,
       },
       { bufferView: 1, componentType: 5126, count: nrm.length / 3, type: "VEC3" },
       { bufferView: 2, componentType: 5123, count: idx.length, type: "SCALAR" },
@@ -206,9 +261,107 @@ export function jetModelUri(cssColor: string): string {
       },
     ],
   };
-
   const blob = new Blob([JSON.stringify(gltf)], { type: "model/gltf+json" });
-  const url = URL.createObjectURL(blob);
-  cache.set(cssColor, url);
+  return URL.createObjectURL(blob);
+}
+
+function hexRgb(cssColor: string): number[] {
+  const hex = cssColor.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  return [r * 0.5 + 0.16, g * 0.5 + 0.16, b * 0.5 + 0.18];
+}
+
+/** Low-poly lofted fighter in glTF space (Y up, Z forward). */
+export function jetModelUri(cssColor: string, variant: string = "sparrow"): string {
+  const key = cssColor + ":" + variant;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const pos: number[] = [];
+  const nrm: number[] = [];
+  const idx: number[] = [];
+  const v = variant as JetVariant;
+
+  const fat = v === "harrier" || v === "aegis" ? 1.18 : v === "wraith" ? 0.92 : 1;
+  const long = v === "kestrel" || v === "viper" ? 1.08 : 1;
+  addLoft(pos, nrm, idx, [
+    { z: -6.5 * long, rx: 0.28 * fat, ry: 0.28 * fat },
+    { z: -5.4 * long, rx: 0.48 * fat, ry: 0.38 * fat },
+    { z: -3.2 * long, rx: 0.62 * fat, ry: 0.42 * fat },
+    { z: -0.4, rx: 0.7 * fat, ry: 0.44 * fat, cy: 0.02 },
+    { z: 2.4, rx: 0.58 * fat, ry: 0.4 * fat, cy: 0.06 },
+    { z: 4.6 * long, rx: 0.4 * fat, ry: 0.3 * fat, cy: 0.04 },
+    { z: 6.4 * long, rx: 0.22, ry: 0.18, cy: 0.02 },
+    { z: 7.7 * long, rx: 0.08, ry: 0.07 },
+  ]);
+  addLoft(
+    pos,
+    nrm,
+    idx,
+    [
+      { z: 1.35, rx: 0.22, ry: 0.12, cy: 0.42 },
+      { z: 2.6, rx: 0.28, ry: 0.2, cy: 0.58 },
+      { z: 3.9, rx: 0.22, ry: 0.16, cy: 0.5 },
+      { z: 5.05, rx: 0.1, ry: 0.08, cy: 0.28 },
+    ],
+    10,
+  );
+
+  if (v === "wraith") {
+    addDeltaWing(pos, nrm, idx, 1);
+    addDeltaWing(pos, nrm, idx, -1);
+  } else {
+    const tip = v === "kestrel" ? 6.4 : v === "harrier" ? 5.1 : 5.7;
+    const rootLE = v === "viper" ? 2.1 : 2.55;
+    const tipLE = v === "viper" ? -0.4 : 0.2;
+    const tipTE = v === "ace" || v === "leader" ? -1.5 : -1.05;
+    addSweptWing(pos, nrm, idx, 1, tip, rootLE, tipLE, tipTE);
+    addSweptWing(pos, nrm, idx, -1, tip, rootLE, tipLE, tipTE);
+  }
+
+  const twin = v === "viper" || v === "leader" || v === "wraith";
+  if (twin) {
+    addBox(pos, nrm, idx, 0.38, 1.35, -4.7, 0.1, 1.7, 1.25);
+    addBox(pos, nrm, idx, -0.38, 1.35, -4.7, 0.1, 1.7, 1.25);
+  } else {
+    addBox(pos, nrm, idx, 0, 1.55, -4.65, 0.1, 1.95, 1.4);
+    addBox(pos, nrm, idx, 0.12, 1.15, -5.0, 0.08, 0.85, 0.85);
+    addBox(pos, nrm, idx, -0.12, 1.15, -5.0, 0.08, 0.85, 0.85);
+  }
+  addBox(pos, nrm, idx, 1.05, 0.16, -4.55, 2.15, 0.08, 0.95);
+  addBox(pos, nrm, idx, -1.05, 0.16, -4.55, 2.15, 0.08, 0.95);
+  addBox(pos, nrm, idx, 0.58, -0.16, 1.15, 0.4, 0.26, 2.2);
+  addBox(pos, nrm, idx, -0.58, -0.16, 1.15, 0.4, 0.26, 2.2);
+  if (v === "aegis") {
+    addSweptWing(pos, nrm, idx, 1, 2.2, 5.2, 4.4, 3.5);
+    addSweptWing(pos, nrm, idx, -1, 2.2, 5.2, 4.4, 3.5);
+  }
+  addBox(pos, nrm, idx, 0, -0.02, -6.55 * long, 0.34, 0.26, 0.5);
+
+  const url = packGltf(pos, nrm, idx, hexRgb(cssColor), { variant });
+  cache.set(key, url);
+  return url;
+}
+
+export function missileModelUri(cssColor: string): string {
+  const key = "msl:" + cssColor;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const pos: number[] = [];
+  const nrm: number[] = [];
+  const idx: number[] = [];
+  addLoft(pos, nrm, idx, [
+    { z: -1.6, rx: 0.12, ry: 0.12 },
+    { z: -0.4, rx: 0.16, ry: 0.16 },
+    { z: 0.8, rx: 0.14, ry: 0.14 },
+    { z: 1.8, rx: 0.02, ry: 0.02 },
+  ], 8);
+  addBox(pos, nrm, idx, 0.35, 0, -1.1, 0.55, 0.04, 0.45);
+  addBox(pos, nrm, idx, -0.35, 0, -1.1, 0.55, 0.04, 0.45);
+  addBox(pos, nrm, idx, 0, 0.35, -1.1, 0.04, 0.55, 0.45);
+  const url = packGltf(pos, nrm, idx, hexRgb(cssColor), { kind: "missile" });
+  cache.set(key, url);
   return url;
 }

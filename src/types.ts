@@ -60,6 +60,7 @@ export interface Enemy extends Pose {
   mslCd: number;
   flareCd: number;
   entity: unknown;
+  exhaust: unknown;
   dead: boolean;
   callsign: string;
   spdMul: number;
@@ -77,6 +78,8 @@ export interface Tracer {
   fromPlayer: boolean;
   dmg: number;
   prim: unknown;
+  line: unknown;
+  trail: Array<[number, number, number]>;
 }
 
 export interface Missile {

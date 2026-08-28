@@ -102,4 +102,6 @@ export function updateFlight(dt: number): void {
 
   const bv = document.getElementById("boostVignette");
   if (bv) bv.style.opacity = G.boostMul > 1.1 ? "1" : "0";
+  G.playerTrail.push([p.lon, p.lat, p.alt]);
+  if (G.playerTrail.length > 28) G.playerTrail.shift();
 }

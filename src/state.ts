@@ -25,7 +25,11 @@ export const G = {
   lastTs: 0,
   raf: 0,
   playerEntity: null as any,
+  playerExhaust: null as any,
+  trailEntity: null as any,
+  playerTrail: [] as Array<[number, number, number]>,
   points: null as any,
+  lines: null as any,
   clouds: null as any,
   player: {
     lon: 126.978,

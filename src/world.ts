@@ -53,12 +53,17 @@ export async function initViewer(): Promise<void> {
   scene.screenSpaceCameraController.enableInputs = false;
   scene.globe.enableLighting = true;
   scene.globe.showGroundAtmosphere = true;
+  try {
+    scene.globe.showWaterEffect = true;
+  } catch {
+    /* water optional */
+  }
   scene.fog.enabled = true;
-  scene.fog.density = 0.000012;
-  scene.skyAtmosphere.brightnessShift = 0.12;
-  scene.skyAtmosphere.saturationShift = 0.08;
-  scene.globe.maximumScreenSpaceError = G.isMobile ? 2.8 : 1.4;
-  scene.globe.tileCacheSize = G.isMobile ? 700 : 2200;
+  scene.fog.density = 0.00001;
+  scene.skyAtmosphere.brightnessShift = 0.16;
+  scene.skyAtmosphere.saturationShift = 0.1;
+  scene.globe.maximumScreenSpaceError = G.isMobile ? 2.8 : 1.6;
+  scene.globe.tileCacheSize = G.isMobile ? 700 : 1800;
   try {
     scene.highDynamicRange = G.quality === "high";
   } catch {
@@ -67,11 +72,11 @@ export async function initViewer(): Promise<void> {
   try {
     const bloom = scene.postProcessStages.bloom;
     bloom.enabled = G.quality === "high";
-    bloom.uniforms.contrast = 96;
-    bloom.uniforms.brightness = -0.25;
-    bloom.uniforms.delta = 0.9;
-    bloom.uniforms.sigma = 3.2;
-    bloom.uniforms.stepSize = 1.6;
+    bloom.uniforms.contrast = 64;
+    bloom.uniforms.brightness = -0.2;
+    bloom.uniforms.delta = 0.8;
+    bloom.uniforms.sigma = 2.4;
+    bloom.uniforms.stepSize = 1.2;
     scene.postProcessStages.fxaa.enabled = true;
   } catch {
     /* post optional */
@@ -86,6 +91,35 @@ export async function initViewer(): Promise<void> {
 
   if (token) void tryPhotorealistic();
   spawnClouds(theaterById("seoul").lon, theaterById("seoul").lat);
+  applyQuality(G.quality);
+}
+
+export function applyQuality(q: "high" | "medium" | "low"): void {
+  G.quality = q;
+  if (!G.viewer || G.viewer.isDestroyed()) return;
+  const scene = G.viewer.scene;
+  scene.globe.maximumScreenSpaceError = q === "high" ? 1.6 : q === "medium" ? 2.6 : 3.8;
+  scene.fog.density = q === "low" ? 0.00002 : 0.00001;
+  try {
+    scene.highDynamicRange = q === "high";
+  } catch {
+    /* */
+  }
+  try {
+    const bloom = scene.postProcessStages.bloom;
+    bloom.enabled = q === "high";
+    scene.postProcessStages.fxaa.enabled = q !== "low";
+  } catch {
+    /* */
+  }
+  if (q === "low" && G.clouds) {
+    try {
+      scene.primitives.remove(G.clouds);
+    } catch {
+      /* */
+    }
+    G.clouds = null;
+  }
 }
 
 export function applySolarNoon(lon: number, _lat: number): void {
@@ -136,7 +170,7 @@ export function spawnClouds(lon: number, lat: number): void {
       }
     }
     const col = new Cesium.CloudCollection();
-    const n = G.isMobile ? 12 : 28;
+    const n = G.quality === "high" ? 12 : G.isMobile ? 5 : 8;
     for (let i = 0; i < n; i++) {
       const dlon = (Math.random() - 0.5) * 1.6;
       const dlat = (Math.random() - 0.5) * 1.2;
@@ -159,20 +193,27 @@ export function lookAtTheater(id: string, height = 420_000, duration = 2.4): voi
   const t = theaterById(id);
   applySolarNoon(t.lon, t.lat);
   G.menuFly = true;
-  G.viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
-    orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
-    duration,
-    easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
-    complete: () => {
-      setMenuLook(t.lon, t.lat, height);
-      G.menuFly = false;
-    },
-    cancel: () => {
-      setMenuLook(t.lon, t.lat, height);
-      G.menuFly = false;
-    },
-  });
+  setMenuLook(t.lon, t.lat, height);
+  try {
+    G.viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
+      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
+      duration,
+      easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
+      complete: () => {
+        G.menuFly = false;
+      },
+      cancel: () => {
+        G.menuFly = false;
+      },
+    });
+  } catch {
+    G.viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
+      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
+    });
+    G.menuFly = false;
+  }
 }
 
 export function resizeViewer(): void {

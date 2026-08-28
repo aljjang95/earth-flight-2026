@@ -113,6 +113,13 @@ export const audio = {
     this.lastRwr = nowMs;
     this.beep(980, 0.08, 0.09, "square");
   },
+  installUnlock() {
+    const go = () => {
+      void this.start();
+    };
+    window.addEventListener("pointerdown", go, { once: true });
+    window.addEventListener("keydown", go, { once: true });
+  },
   setMuted(v: boolean): void {
     this.muted = v;
     if (this.master) this.master.gain.value = v ? 0 : 0.2;

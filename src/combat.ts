@@ -3,17 +3,26 @@ import { G } from "./state";
 import type { Enemy, Missile, Tracer } from "./types";
 import { bearingTo, distM, moveBody, wrapPi } from "./math";
 import { audio } from "./audio";
-import { burstExplosion, ensurePointCollection } from "./fx";
+import { burstExplosion, ensurePointCollection, ensurePolylineCollection, hitSpark } from "./fx";
 import { addXp, writeSave } from "./save";
 import { updateEnemy } from "./ai";
-import { jetModelUri } from "./models";
+import { jetModelUri, missileModelUri } from "./models";
 import { transitCinematic, spawnClouds, applySolarNoon } from "./world";
 import { input, keys } from "./input";
 
 let eid = 1;
 
-function addJet(color: string, getter: () => { lon: number; lat: number; alt: number; heading: number; pitch: number; roll: number }, scale: number): any {
-  return G.viewer.entities.add({
+type PoseGetter = () => { lon: number; lat: number; alt: number; heading: number; pitch: number; roll: number };
+
+function addJet(
+  color: string,
+  getter: PoseGetter,
+  scale: number,
+  variant: string,
+  label?: string,
+): { jet: any; exhaust: any } {
+  const labeled = !!label && G.quality !== "low";
+  const jet = G.viewer.entities.add({
     position: new Cesium.CallbackPositionProperty(() => {
       const p = getter();
       return Cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.alt);
@@ -27,20 +36,89 @@ function addJet(color: string, getter: () => { lon: number; lat: number; alt: nu
       );
     }, false),
     model: {
-      uri: jetModelUri(color),
-      minimumPixelSize: 92,
-      maximumScale: 48000,
+      uri: jetModelUri(color, variant),
+      minimumPixelSize: labeled ? 150 : 118,
+      maximumScale: 80000,
       scale,
       color: Cesium.Color.fromCssColorString(color),
       colorBlendMode: Cesium.ColorBlendMode.MIX,
-      colorBlendAmount: 0.42,
+      colorBlendAmount: 0.48,
+      silhouetteColor: Cesium.Color.fromCssColorString(color).withAlpha(0.8),
+      silhouetteSize: labeled ? 2.0 : 1.35,
+    },
+    label: labeled
+      ? {
+          text: label,
+          font: "bold 13px monospace",
+          fillColor: Cesium.Color.fromCssColorString("#fecaca"),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 4,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -36),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          showBackground: true,
+          backgroundColor: Cesium.Color.BLACK.withAlpha(0.45),
+        }
+      : undefined,
+    point: {
+      pixelSize: labeled ? 6 : 0,
+      color: Cesium.Color.fromCssColorString(color),
+      outlineColor: Cesium.Color.WHITE,
+      outlineWidth: 1,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
   });
+  const exhaust = G.viewer.entities.add({
+    position: new Cesium.CallbackPositionProperty(() => {
+      const p = getter();
+      const m = 16 / 111320;
+      return Cesium.Cartesian3.fromDegrees(
+        p.lon - Math.sin(p.heading) * m,
+        p.lat - Math.cos(p.heading) * m,
+        p.alt - 0.6,
+      );
+    }, false),
+    point: {
+      pixelSize: labeled ? 12 : 14,
+      color: Cesium.Color.fromCssColorString("#fb923c"),
+      outlineColor: Cesium.Color.fromCssColorString("#fff7ed"),
+      outlineWidth: 1,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
+  return { jet, exhaust };
 }
 
 export function spawnPlayerCraft(): void {
   const craft = craftById(G.equipped);
-  G.playerEntity = addJet(craft.color, () => G.player, 4.15);
+  const spawned = addJet(craft.color, () => G.player, 5.8, craft.id);
+  G.playerEntity = spawned.jet;
+  G.playerExhaust = spawned.exhaust;
+  G.playerTrail = [];
+  if (G.trailEntity) {
+    try {
+      G.viewer.entities.remove(G.trailEntity);
+    } catch {
+      /* */
+    }
+  }
+  G.trailEntity = G.viewer.entities.add({
+    polyline: {
+      positions: new Cesium.CallbackProperty(() => {
+        if (G.playerTrail.length < 2) {
+          const p = G.player;
+          const a = Cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.alt);
+          return [a, a];
+        }
+        return G.playerTrail.map((t) => Cesium.Cartesian3.fromDegrees(t[0], t[1], t[2]));
+      }, false),
+      width: 2.6,
+      material: new Cesium.PolylineGlowMaterialProperty({
+        glowPower: 0.2,
+        color: Cesium.Color.fromCssColorString("#e0f2fe").withAlpha(0.55),
+      }),
+    },
+  });
 }
 
 export function spawnWave(): void {
@@ -75,16 +153,16 @@ export function spawnWave(): void {
     const slot = i / Math.max(1, n - 1);
     const pattern = i % 3;
     let hdg = p.heading;
-    let meters = 520 + i * 90;
+    let meters = 280 + i * 50 + Math.random() * 40;
     if (pattern === 0) {
       hdg = p.heading + (slot - 0.5) * 0.35;
-      meters = 480 + i * 70;
+      meters = 300 + i * 45;
     } else if (pattern === 1) {
       hdg = p.heading + 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = 700 + i * 50;
+      meters = 380 + i * 40;
     } else {
       hdg = p.heading - 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = 640 + i * 55;
+      meters = 360 + i * 40;
     }
     const dist = meters / 111320;
     const kind = isBoss && i === 0 ? "leader" : isBoss || G.wave >= 8 ? "ace" : "bandit";
@@ -106,12 +184,15 @@ export function spawnWave(): void {
       mslCd: 4 + Math.random() * 5,
       flareCd: 0,
       entity: null,
+      exhaust: null,
       dead: false,
       callsign: `${CALLSIGNS[i % CALLSIGNS.length]}-${(i + 1).toString().padStart(2, "0")}`,
       spdMul: rank.spd * (kind === "ace" ? 1.12 : 1),
     };
     const color = kind === "leader" ? "#fbbf24" : kind === "ace" ? "#ef4444" : "#f87171";
-    e.entity = addJet(color, () => e, kind === "leader" ? 5.1 : 4.0);
+    const spawned = addJet(color, () => e, kind === "leader" ? 7.4 : 6.4, kind, e.callsign);
+    e.entity = spawned.jet;
+    e.exhaust = spawned.exhaust;
     G.enemies.push(e);
   }
 }
@@ -130,18 +211,56 @@ function showBanner(kicker: string, title: string, rank: string): void {
   }, 2200);
 }
 
+let barrel = 0;
+
+type Spark = {
+  lon: number;
+  lat: number;
+  alt: number;
+  heading: number;
+  pitch: number;
+  speed: number;
+  t: number;
+  life: number;
+  prim: any;
+};
+const flareSparks: Spark[] = [];
+
 function spawnTracer(fromPlayer: boolean, lon: number, lat: number, alt: number, heading: number, pitch: number, speed: number, dmg: number): void {
   const pts = ensurePointCollection();
+  const lines = ensurePolylineCollection();
   const color = fromPlayer ? Cesium.Color.fromCssColorString("#fde68a") : Cesium.Color.fromCssColorString("#fb7185");
   const prim = pts.add({
     position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
-    pixelSize: fromPlayer ? 6 : 5,
+    pixelSize: fromPlayer ? 8 : 7,
     color,
     outlineColor: Cesium.Color.ORANGE,
     outlineWidth: 1,
     disableDepthTestDistance: Number.POSITIVE_INFINITY,
   });
-  const t: Tracer = { lon, lat, alt, heading, pitch, speed, t: 0, life: 1.35, fromPlayer, dmg, prim };
+  const line = lines.add({
+    positions: [
+      Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+      Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+    ],
+    width: fromPlayer ? 3.4 : 2.8,
+    material: Cesium.Material.fromType("Color", { color: color.withAlpha(0.9) }),
+  });
+  const t: Tracer = {
+    lon,
+    lat,
+    alt,
+    heading,
+    pitch,
+    speed,
+    t: 0,
+    life: 1.45,
+    fromPlayer,
+    dmg,
+    prim,
+    line,
+    trail: [[lon, lat, alt]],
+  };
   G.tracers.push(t);
 }
 
@@ -157,7 +276,19 @@ export function fireGun(): void {
     const d = distM(p.lon, p.lat, p.alt, G.locked.lon, G.locked.lat, G.locked.alt);
     pit = p.pitch + (Math.atan2(G.locked.alt - p.alt, Math.max(1, d)) - p.pitch) * 0.35;
   }
-  spawnTracer(true, p.lon, p.lat, p.alt - 1, hdg, pit, p.speed + 420, G.gunDmg);
+  const side = barrel ? 1 : -1;
+  barrel ^= 1;
+  const off = 14 / 111320;
+  spawnTracer(
+    true,
+    p.lon + Math.sin(hdg + Math.PI / 2) * off * side,
+    p.lat + Math.cos(hdg + Math.PI / 2) * off * side,
+    p.alt - 1,
+    hdg,
+    pit,
+    p.speed + 440,
+    G.gunDmg,
+  );
 }
 
 export function fireMissile(free = false): void {
@@ -223,8 +354,18 @@ export function fireEnemyMissile(e: Enemy): void {
 function missileEntity(m: Missile, color: string): any {
   return G.viewer.entities.add({
     position: new Cesium.CallbackPositionProperty(() => Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt), false),
+    orientation: new Cesium.CallbackProperty(() => {
+      const c = Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt);
+      return Cesium.Transforms.headingPitchRollQuaternion(c, new Cesium.HeadingPitchRoll(m.heading, m.pitch, 0));
+    }, false),
+    model: {
+      uri: missileModelUri(color),
+      minimumPixelSize: 28,
+      maximumScale: 12000,
+      scale: 2.4,
+    },
     point: {
-      pixelSize: 10,
+      pixelSize: 9,
       color: Cesium.Color.fromCssColorString(color),
       outlineColor: Cesium.Color.WHITE,
       outlineWidth: 1,
@@ -235,10 +376,10 @@ function missileEntity(m: Missile, color: string): any {
         if (m.trail.length < 2) return [Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt), Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt)];
         return m.trail.map((t) => Cesium.Cartesian3.fromDegrees(t[0], t[1], t[2]));
       }, false),
-      width: 3.2,
+      width: 3.6,
       material: new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.22,
-        color: Cesium.Color.fromCssColorString(color).withAlpha(0.85),
+        glowPower: 0.28,
+        color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
       }),
     },
   });
@@ -251,9 +392,31 @@ export function tryFlare(): void {
   audio.flare();
   const p = G.player;
   const back = p.heading + Math.PI;
-  const flon = p.lon + Math.sin(back) * (40 / 111320);
-  const flat = p.lat + Math.cos(back) * (40 / 111320);
-  burstExplosion(flon, flat, p.alt - 8, 0.45);
+  const pts = ensurePointCollection();
+  for (let i = 0; i < 10; i++) {
+    const spread = (Math.random() - 0.5) * 0.9;
+    const m = (28 + Math.random() * 36) / 111320;
+    const prim = pts.add({
+      position: Cesium.Cartesian3.fromDegrees(p.lon + Math.sin(back + spread) * m, p.lat + Math.cos(back + spread) * m, p.alt - 6),
+      pixelSize: 8 + Math.random() * 5,
+      color: Cesium.Color.fromCssColorString(Math.random() < 0.5 ? "#fb923c" : "#fde68a"),
+      outlineColor: Cesium.Color.WHITE,
+      outlineWidth: 1,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    });
+    flareSparks.push({
+      lon: p.lon + Math.sin(back + spread) * m,
+      lat: p.lat + Math.cos(back + spread) * m,
+      alt: p.alt - 6,
+      heading: back + spread,
+      pitch: -0.55 - Math.random() * 0.25,
+      speed: 36 + Math.random() * 40,
+      t: 0,
+      life: 2.1 + Math.random() * 0.5,
+      prim,
+    });
+  }
+  burstExplosion(p.lon + Math.sin(back) * (40 / 111320), p.lat + Math.cos(back) * (40 / 111320), p.alt - 8, 0.45);
   for (const m of G.missiles) {
     if (m.dead || !m.toPlayer) continue;
     const d = distM(m.lon, m.lat, m.alt, p.lon, p.lat, p.alt);
@@ -363,6 +526,14 @@ export function killEnemy(e: Enemy): void {
     }
     e.entity = null;
   }
+  if (e.exhaust) {
+    try {
+      G.viewer.entities.remove(e.exhaust);
+    } catch {
+      /* */
+    }
+    e.exhaust = null;
+  }
 }
 
 export function damagePlayer(amount: number): void {
@@ -434,6 +605,7 @@ function updateLock(dt: number): void {
 
 function updateTracers(dt: number): void {
   const pts = G.points;
+  const lines = G.lines;
   for (let i = G.tracers.length - 1; i >= 0; i--) {
     const b = G.tracers[i];
     b.t += dt;
@@ -443,13 +615,27 @@ function updateTracers(dt: number): void {
       } catch {
         /* */
       }
+      try {
+        if (b.line && lines) lines.remove(b.line);
+      } catch {
+        /* */
+      }
       G.tracers.splice(i, 1);
       continue;
     }
     moveBody(b, dt);
+    b.trail.push([b.lon, b.lat, b.alt]);
+    if (b.trail.length > 5) b.trail.shift();
     if (b.prim) {
       try {
         (b.prim as { position: unknown }).position = Cesium.Cartesian3.fromDegrees(b.lon, b.lat, b.alt);
+      } catch {
+        /* */
+      }
+    }
+    if (b.line) {
+      try {
+        (b.line as { positions: unknown }).positions = b.trail.map((t) => Cesium.Cartesian3.fromDegrees(t[0], t[1], t[2]));
       } catch {
         /* */
       }
@@ -459,8 +645,14 @@ function updateTracers(dt: number): void {
         if (e.dead) continue;
         if (distM(b.lon, b.lat, b.alt, e.lon, e.lat, e.alt) < 48) {
           e.hp -= b.dmg * (Math.random() < 0.12 ? 2 : 1);
+          hitSpark(e.lon, e.lat, e.alt);
           try {
             if (b.prim && pts) pts.remove(b.prim);
+          } catch {
+            /* */
+          }
+          try {
+            if (b.line && lines) lines.remove(b.line);
           } catch {
             /* */
           }
@@ -471,8 +663,14 @@ function updateTracers(dt: number): void {
       }
     } else if (distM(b.lon, b.lat, b.alt, G.player.lon, G.player.lat, G.player.alt) < 38) {
       damagePlayer(b.dmg);
+      hitSpark(G.player.lon, G.player.lat, G.player.alt);
       try {
         if (b.prim && pts) pts.remove(b.prim);
+      } catch {
+        /* */
+      }
+      try {
+        if (b.line && lines) lines.remove(b.line);
       } catch {
         /* */
       }
@@ -496,8 +694,12 @@ function updateMissiles(dt: number): void {
     } else if (m.toPlayer && !m.flared) {
       steerTo(m, G.player.lon, G.player.lat, G.player.alt, dt, 2.6);
     } else if (m.flared) {
-      m.pitch += 0.4 * dt;
-      m.heading += 0.8 * dt;
+      const decoy = flareSparks[0];
+      if (decoy) steerTo(m, decoy.lon, decoy.lat, decoy.alt, dt, 4.2);
+      else {
+        m.pitch += 0.4 * dt;
+        m.heading += 0.8 * dt;
+      }
     }
     moveBody(m, dt);
     m.trail.push([m.lon, m.lat, m.alt]);
@@ -579,6 +781,32 @@ async function onTheaterClear(): Promise<void> {
   G.waveHold = 1.2;
 }
 
+function updateFlares(dt: number): void {
+  const pts = G.points;
+  for (let i = flareSparks.length - 1; i >= 0; i--) {
+    const f = flareSparks[i];
+    f.t += dt;
+    if (f.t > f.life) {
+      try {
+        if (f.prim && pts) pts.remove(f.prim);
+      } catch {
+        /* */
+      }
+      flareSparks.splice(i, 1);
+      continue;
+    }
+    moveBody(f, dt);
+    if (f.prim) {
+      try {
+        f.prim.position = Cesium.Cartesian3.fromDegrees(f.lon, f.lat, f.alt);
+        f.prim.pixelSize = 6 + (1 - f.t / f.life) * 8;
+      } catch {
+        /* */
+      }
+    }
+  }
+}
+
 export function updateCombat(dt: number): void {
   G.aliveTime += dt;
   G.fireCd = Math.max(0, G.fireCd - dt);
@@ -626,6 +854,7 @@ export function updateCombat(dt: number): void {
   updateLock(dt);
   updateTracers(dt);
   updateMissiles(dt);
+  updateFlares(dt);
 
   if (G.rwr) audio.rwr(performance.now());
 
@@ -677,6 +906,11 @@ export function clearCombatEntities(): void {
     } catch {
       /* */
     }
+    try {
+      if (e.exhaust) G.viewer.entities.remove(e.exhaust);
+    } catch {
+      /* */
+    }
   }
   for (const m of G.missiles) {
     try {
@@ -688,6 +922,8 @@ export function clearCombatEntities(): void {
   G.enemies.length = 0;
   G.missiles.length = 0;
   G.tracers.length = 0;
+  flareSparks.length = 0;
+  G.playerTrail = [];
   try {
     if (G.points) {
       G.viewer.scene.primitives.remove(G.points);
@@ -696,6 +932,14 @@ export function clearCombatEntities(): void {
   } catch {
     G.points = null;
   }
+  try {
+    if (G.lines) {
+      G.viewer.scene.primitives.remove(G.lines);
+      G.lines = null;
+    }
+  } catch {
+    G.lines = null;
+  }
   if (G.playerEntity) {
     try {
       G.viewer.entities.remove(G.playerEntity);
@@ -703,5 +947,21 @@ export function clearCombatEntities(): void {
       /* */
     }
     G.playerEntity = null;
+  }
+  if (G.playerExhaust) {
+    try {
+      G.viewer.entities.remove(G.playerExhaust);
+    } catch {
+      /* */
+    }
+    G.playerExhaust = null;
+  }
+  if (G.trailEntity) {
+    try {
+      G.viewer.entities.remove(G.trailEntity);
+    } catch {
+      /* */
+    }
+    G.trailEntity = null;
   }
 }

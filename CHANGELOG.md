@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1] - 2026-08-28
+### Added
+- Lofted fighter glTF (tapered fuselage, canopy, craft/bandit variants) plus missile dart mesh.
+- Dual-cannon tracer streaks, engine glow, player contrail, visible flare sparks that decoy missiles.
+- FPS-adaptive Cesium quality (`applyQuality`) so play stays smooth on weaker GPUs.
+- Audio unlock on first pointer/key gesture; lock HUD shows LOCKING%.
+
+### Fixed
+- Radar no longer covers FIRE / flare / skill; radar dots are pooled instead of rebuilt every frame.
+- Hangar theater chips fly the globe immediately; combat camera sits closer for a readable jet.
+
 ## [2.0.0] - 2026-08-28
 ### Added
 - **World Circuit campaign**: 12 real-Earth theaters with transit cinematics (Seoul → Sydney).

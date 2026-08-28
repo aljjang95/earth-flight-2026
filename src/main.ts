@@ -1,5 +1,5 @@
 import "./styles.css";
-import { CAMPAIGN, CRAFTS, SUBTITLE, TITLE, VERSION, theaterById } from "./config";
+import { CAMPAIGN, CRAFTS, SUBTITLE, THEATERS, TITLE, VERSION, theaterById } from "./config";
 import { G } from "./state";
 import { audio } from "./audio";
 import { initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
@@ -23,6 +23,27 @@ function refreshStart(): void {
   const circ = $("#circuitProg");
   if (circ) circ.textContent = `${cleared}/${CAMPAIGN.length}`;
   renderCrafts();
+  renderTheaters();
+}
+
+function renderTheaters(): void {
+  const row = $("theaterRow");
+  if (!row) return;
+  row.innerHTML = "";
+  for (const t of THEATERS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "theater-chip" + (G.theaterId === t.id ? " active" : "");
+    b.textContent = t.name;
+    b.onclick = () => {
+      G.theaterId = t.id;
+      ($("locationSelect") as HTMLSelectElement).value = t.id;
+      $("briefPreview").textContent = t.briefing;
+      lookAtTheater(t.id, 480_000, 2.3);
+      renderTheaters();
+    };
+    row.appendChild(b);
+  }
 }
 
 function renderCrafts(): void {
@@ -183,9 +204,10 @@ function wireUi(): void {
   $("locationSelect").addEventListener("change", () => {
     const id = ($("locationSelect") as HTMLSelectElement).value;
     G.theaterId = id;
-    lookAtTheater(id, 520_000, 2.2);
+    lookAtTheater(id, 480_000, 2.3);
     const t = theaterById(id);
     $("briefPreview").textContent = t.briefing || `${t.name} · 자유 비행 가능`;
+    renderTheaters();
   });
 
   $("buyPotion").addEventListener("click", () => {
@@ -255,6 +277,7 @@ async function boot(): Promise<void> {
   bindHud();
   bindGameKeys();
   wireUi();
+  audio.installUnlock();
   startLoop();
 
   const qa = new URLSearchParams(location.search).has("qa") || new URLSearchParams(location.search).has("harness");

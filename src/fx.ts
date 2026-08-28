@@ -34,33 +34,36 @@ export function burstExplosion(lon: number, lat: number, alt: number, scale = 1)
   if (!viewer || viewer.isDestroyed()) return;
   if (!spark) spark = sparkTexture();
   const pos = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
-  try {
-    const sys = viewer.scene.primitives.add(
-      new Cesium.ParticleSystem({
-        image: spark,
-        startColor: Cesium.Color.fromCssColorString("#ffdd88").withAlpha(0.95),
-        endColor: Cesium.Color.fromCssColorString("#ff3300").withAlpha(0),
-        startScale: 3.5 * scale,
-        endScale: 14 * scale,
-        particleLife: 0.7,
-        speed: 18 * scale,
-        emitter: new Cesium.SphereEmitter(4 * scale),
-        emissionRate: 0,
-        bursts: [new Cesium.ParticleBurst({ time: 0, minimum: 28, maximum: 48 })],
-        lifetime: 0.85,
-        modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(pos),
-        sizeInMeters: true,
-      }),
-    );
-    window.setTimeout(() => {
-      try {
-        viewer.scene.primitives.remove(sys);
-      } catch {
-        /* gone */
-      }
-    }, 1200);
-  } catch {
-    /* particle optional */
+  if (G.quality !== "low") {
+    try {
+      const n = G.quality === "high" ? 40 : 22;
+      const sys = viewer.scene.primitives.add(
+        new Cesium.ParticleSystem({
+          image: spark,
+          startColor: Cesium.Color.fromCssColorString("#ffdd88").withAlpha(0.95),
+          endColor: Cesium.Color.fromCssColorString("#ff3300").withAlpha(0),
+          startScale: 3.5 * scale,
+          endScale: 14 * scale,
+          particleLife: 0.7,
+          speed: 18 * scale,
+          emitter: new Cesium.SphereEmitter(4 * scale),
+          emissionRate: 0,
+          bursts: [new Cesium.ParticleBurst({ time: 0, minimum: n * 0.7, maximum: n })],
+          lifetime: 0.85,
+          modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(pos),
+          sizeInMeters: true,
+        }),
+      );
+      window.setTimeout(() => {
+        try {
+          viewer.scene.primitives.remove(sys);
+        } catch {
+          /* gone */
+        }
+      }, 1200);
+    } catch {
+      /* particle optional */
+    }
   }
 
   try {
@@ -87,6 +90,31 @@ export function ensurePointCollection(): any {
   if (G.points && !G.points.isDestroyed?.()) return G.points;
   G.points = G.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
   return G.points;
+}
+
+export function ensurePolylineCollection(): any {
+  if (G.lines && !G.lines.isDestroyed?.()) return G.lines;
+  G.lines = G.viewer.scene.primitives.add(new Cesium.PolylineCollection());
+  return G.lines;
+}
+
+export function hitSpark(lon: number, lat: number, alt: number): void {
+  const pts = ensurePointCollection();
+  const prim = pts.add({
+    position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+    pixelSize: 11,
+    color: Cesium.Color.fromCssColorString("#fff7ed"),
+    outlineColor: Cesium.Color.ORANGE,
+    outlineWidth: 1,
+    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+  });
+  window.setTimeout(() => {
+    try {
+      pts.remove(prim);
+    } catch {
+      /* */
+    }
+  }, 90);
 }
 
 export function hprFrame(lon: number, lat: number, alt: number, h: number, p: number, r: number): any {

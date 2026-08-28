@@ -141,7 +141,7 @@ export function drawHud(): void {
   const th = theaterById(G.theaterId);
   c.fillText(`${th.name} · ${th.region}`, 16, 28);
   c.fillStyle = "rgba(226,232,240,0.75)";
-  c.fillText(`THR ${Math.round(p.throttle * 100)}%   G ${p.g.toFixed(1)}   ${G.tilesBackend.toUpperCase()}`, 16, 46);
+  c.fillText(`THR ${Math.round(p.throttle * 100)}%   G ${p.g.toFixed(1)}   ${G.tilesBackend.toUpperCase()} · ${G.quality.toUpperCase()}`, 16, 46);
 
   const hpW = 168;
   const hpX = 16;
@@ -189,10 +189,16 @@ export function drawHud(): void {
       c.textAlign = "center";
       const d = distM(p.lon, p.lat, p.alt, G.locked.lon, G.locked.lat, G.locked.alt);
       c.fillText(
-        (hard ? "LOCK " : "LCK ") + (d / 1000).toFixed(1) + "km  HP " + Math.max(0, Math.round(G.locked.hp)),
+        (hard ? "LOCK " : `LOCKING ${Math.round(G.lockProg * 100)}% `) +
+          (d / 1000).toFixed(1) +
+          "km  HP " +
+          Math.max(0, Math.round(G.locked.hp)),
         s.x,
         s.y + sz + 16,
       );
+      if (G.locked.callsign) {
+        c.fillText(G.locked.callsign, s.x, s.y - sz - 8);
+      }
     }
   }
 
@@ -203,6 +209,11 @@ export function drawHud(): void {
     c.strokeStyle = e.kind === "leader" ? gold : red;
     c.globalAlpha = 0.75;
     c.strokeRect(s.x - 8, s.y - 8, 16, 16);
+    c.globalAlpha = 0.9;
+    c.fillStyle = e.kind === "leader" ? gold : red;
+    c.font = "10px ui-monospace, monospace";
+    c.textAlign = "center";
+    c.fillText(e.callsign, s.x, s.y - 12);
     c.globalAlpha = 1;
   }
 
@@ -222,27 +233,44 @@ export function drawHud(): void {
 
   const radar = document.getElementById("radar");
   if (radar && G.mode !== "free") {
-    radar.querySelectorAll(".radar-dot").forEach((n) => n.remove());
     const range = 12000;
+    const live: Array<{ e: (typeof G.enemies)[number]; x: number; y: number }> = [];
     for (const e of G.enemies) {
       if (e.dead) continue;
       const d = distM(p.lon, p.lat, p.alt, e.lon, e.lat, e.alt);
       if (d > range) continue;
       const brg = wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading);
       const r = (d / range) * 48;
-      const x = 55 + Math.sin(brg) * r;
-      const y = 55 - Math.cos(brg) * r;
+      live.push({ e, x: 55 + Math.sin(brg) * r, y: 55 - Math.cos(brg) * r });
+    }
+    let dots = radar.querySelectorAll(".radar-dot");
+    while (dots.length < live.length) {
       const dot = document.createElement("div");
       dot.className = "radar-dot";
-      if (e === G.locked) {
+      radar.appendChild(dot);
+      dots = radar.querySelectorAll(".radar-dot");
+    }
+    dots.forEach((node, i) => {
+      const dot = node as HTMLDivElement;
+      if (i >= live.length) {
+        dot.style.display = "none";
+        return;
+      }
+      const item = live[i];
+      dot.style.display = "block";
+      dot.style.left = item.x + "px";
+      dot.style.top = item.y + "px";
+      if (item.e === G.locked) {
         dot.style.background = "#fde68a";
         dot.style.boxShadow = "0 0 8px #fde68a";
+      } else if (item.e.kind === "leader") {
+        dot.style.background = "#fbbf24";
+        dot.style.boxShadow = "0 0 6px #fbbf24";
+      } else {
+        dot.style.background = "#f43f5e";
+        dot.style.boxShadow = "0 0 6px #f43f5e";
       }
-      if (e.kind === "leader") dot.style.background = "#fbbf24";
-      dot.style.left = x + "px";
-      dot.style.top = y + "px";
-      radar.appendChild(dot);
-    }
+    });
   }
 
   c.textAlign = "left";

@@ -1,6 +1,7 @@
 import { VERSION } from "./config";
 import { G } from "./state";
 import { theaterById } from "./config";
+import { applyQuality } from "./world";
 
 export function tickHarness(dt: number): void {
   G.frames += 1;
@@ -9,6 +10,8 @@ export function tickHarness(dt: number): void {
     G.fps = G.frames / G.fpsT;
     G.frames = 0;
     G.fpsT = 0;
+    if (G.fps > 2 && G.fps < 22 && G.quality === "high") applyQuality("medium");
+    else if (G.fps > 2 && G.fps < 16 && G.quality === "medium") applyQuality("low");
   }
   const beat = {
     t: Date.now(),
