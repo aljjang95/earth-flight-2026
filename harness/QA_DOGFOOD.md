@@ -41,6 +41,12 @@ Convert EARTH FLIGHT into a **world-travel + live fighter-jet combat** web game 
 | Supervisor heartbeat dock | in-game always on |
 | Playable without ion token | Esri imagery |
 
+## v2.1.1 browser dogfood (2026-08-28)
+
+Hangar `http://localhost:5173/` — globe without ion token; 16 chips; Tokyo / NYC / Seoul flyTo; heartbeat `SV HB#… orch=ok 28fps low` (SwiftShader correctly booted low).
+
+Combat `http://localhost:5173/?qa=1` — hangar locked off (`mission-live`); 3rd-person jet over Seoul Esri; WAVE 1 **E2**; survived **90s+** with HP ~90–100 (was ~5s / 0 kills on 2.1.0); guns tracers + flares; `window.__ACE_HEARTBEAT.version === "2.1.1"`, `software: true`, `quality: "low"`. `patchGen` stayed 0 because quality was already floor.
+
 ## Commands
 
 ```bash
