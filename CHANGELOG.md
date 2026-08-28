@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.1.0] - 2026-08-28
+### Changed
+- Chase camera pulled back so the player jet, **GHOST-1 / GHOST-2**, and nearby bandits share the shot.
+- Wingmen hold formation for the first seconds instead of immediately leaving frame.
+- Ground strike sites spawn **ahead of the player** as tall orange towers with DESTROY labels.
+- Hangar theater chips show mission kind (요격/타격/엄호/방어).
+- Combat opens with a **sortie card** (theater + mission + weather).
+- `/?qa=strike` Nairobi, `/?qa=defend` Rome, `/?qa=escort` Vancouver.
+
 ## [5.0.0] - 2026-08-28
 ### Added
 - First-flight **tutorial** overlay (skipped on `/?qa=1`, persisted via `tutorialDone`).

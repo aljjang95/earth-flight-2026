@@ -95,7 +95,15 @@ Remaining non-blockers: photorealistic 3D cities still need an optional Cesium i
 | Strike / defend / escort briefs | PASS on hangar chips |
 | Hangar MEDAL counter | PASS |
 
-## v5.0.0 production polish
+## v5.1.0 release update (play, not a number bump)
+
+| Check | Result |
+| --- | --- |
+| Chase cam pulled back; GHOST-1/2 in shot | (dogfood) |
+| Sortie card on takeoff | (dogfood) |
+| Hangar chips show 요격/타격/엄호/방어 | (dogfood) |
+| `/?qa=strike` Nairobi sites | (dogfood) |
+
 
 | Check | Result |
 | --- | --- |

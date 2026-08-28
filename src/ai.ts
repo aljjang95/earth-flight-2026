@@ -110,16 +110,18 @@ export function updateWingman(
     }
   }
   const p = G.player;
-  if (!tgt) {
-    const slot = 90 / 111320;
-    const wantLon = p.lon + Math.sin(p.heading + 0.9) * slot;
-    const wantLat = p.lat + Math.cos(p.heading + 0.9) * slot;
+  const side = w.callsign.includes("2") ? -1 : 1;
+  if (G.aliveTime < 4 || !tgt || best > 1400) {
+    const slot = 50 / 111320;
+    const wantLon = p.lon + Math.sin(p.heading + side * 0.9) * slot;
+    const wantLat = p.lat + Math.cos(p.heading + side * 0.9) * slot;
     const brg = bearingTo(w.lon, w.lat, wantLon, wantLat);
     const dh = wrapPi(brg - w.heading);
     w.heading += Math.max(-1.2, Math.min(1.2, dh * 2)) * dt;
     w.roll = dh * 0.8;
-    w.pitch += ((p.pitch - w.pitch) * 2 + (p.alt + 40 - w.alt) * 0.0004) * dt;
-    w.speed = p.speed * 0.96;
+    w.pitch += ((p.pitch - w.pitch) * 2 + (p.alt + (side > 0 ? 12 : 6) - w.alt) * 0.0005) * dt;
+    w.speed = p.speed * 0.98;
+    w.heading += wrapPi(p.heading - w.heading) * 1.4 * dt;
     moveBody(w, dt);
     return;
   }

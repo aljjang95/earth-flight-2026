@@ -61,6 +61,9 @@ check("medals", all.includes("medals") && html.includes("startMedals"), "theater
 check("tutorial", html.includes("id=\"tutorial\"") && all.includes("maybeStartTutorial") && all.includes("tutorialDone"), "first-flight tutorial");
 check("pause-photo", html.includes("photoBtn") && all.includes("takePhoto"), "pause snapshot");
 check("credits", html.includes("creditsOverlay") && all.includes("showCredits"), "credits overlay");
+check("sortie-card", html.includes("sortieCard") && all.includes("showSortieCard"), "sortie briefing card");
+check("ghost-pair", all.includes("GHOST-2") && all.includes("GHOST-1 / GHOST-2"), "visible two-ship wing");
+check("qa-missions", all.includes('key === "strike"') && all.includes('"nairobi"'), "qa=strike/defend/escort boot");
 
 const pass = findings.every((f) => f.ok);
 const report = {

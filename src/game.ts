@@ -1,4 +1,4 @@
-import { CAMPAIGN, VERSION, craftById, theaterById } from "./config";
+import { CAMPAIGN, MISSION_KO, VERSION, WEATHER_KO, craftById, theaterById } from "./config";
 import { G, resetCombatStats } from "./state";
 import { audio } from "./audio";
 import { updateMenuCamera, updateCamera, toggleCamera } from "./camera";
@@ -111,14 +111,7 @@ export async function startMission(): Promise<void> {
   if (combat) {
     G.campaignIndex = Math.max(0, CAMPAIGN.indexOf(G.theaterId));
     spawnWave();
-    const kt = document.getElementById("killToast");
-    if (kt) {
-      kt.textContent = G.mode === "campaign" ? `MISSION · ${t.name}` : "MISSION · 제공권 확보";
-      kt.style.opacity = "1";
-      setTimeout(() => {
-        kt.style.opacity = "0";
-      }, 1600);
-    }
+    showSortieCard(t);
   }
 
   const hint = document.getElementById("controls-hint");
@@ -130,6 +123,19 @@ export async function startMission(): Promise<void> {
     }, 6500);
   }
   maybeStartTutorial();
+}
+
+function showSortieCard(t: ReturnType<typeof theaterById>): void {
+  const el = document.getElementById("sortieCard");
+  if (!el) return;
+  const kicker = el.querySelector(".sc-kicker");
+  const title = el.querySelector(".sc-title");
+  const mission = el.querySelector(".sc-mission");
+  if (kicker) kicker.textContent = G.mode === "campaign" ? "WORLD CIRCUIT" : "SORTIE";
+  if (title) title.textContent = t.name;
+  if (mission) mission.textContent = `${MISSION_KO[t.mission]} · ${WEATHER_KO[t.weather]} · ${t.country}`;
+  el.classList.add("show");
+  window.setTimeout(() => el.classList.remove("show"), 3200);
 }
 
 export function returnToBase(): void {

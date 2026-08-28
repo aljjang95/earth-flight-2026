@@ -44,12 +44,24 @@ function addJet(
       colorBlendAmount: 0.42,
     },
     point: {
-      pixelSize: label ? 6 : 0,
+      pixelSize: label ? 10 : 0,
       color: Cesium.Color.fromCssColorString(color),
       outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 1,
+      outlineWidth: 2,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
+    label: label
+      ? {
+          text: label,
+          font: "bold 15px sans-serif",
+          fillColor: Cesium.Color.fromCssColorString(color),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 4,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -36),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        }
+      : undefined,
   });
   return { jet, exhaust: null };
 }
@@ -86,19 +98,30 @@ export function spawnPlayerCraft(): void {
   });
 }
 
-export function spawnWingman(): void {
+function offsetFrom(p: { lon: number; lat: number; alt: number; heading: number }, hdgOff: number, meters: number, dAlt: number) {
+  const h = p.heading + hdgOff;
+  const d = meters / 111320;
+  return {
+    lon: p.lon + Math.sin(h) * d,
+    lat: p.lat + Math.cos(h) * d * 0.85,
+    alt: p.alt + dAlt,
+  };
+}
+
+function makeWingman(callsign: string, hdgOff: number, meters: number, dAlt: number, color: string): Enemy {
   const p = G.player;
+  const o = offsetFrom(p, hdgOff, meters, dAlt);
   const w: Enemy = {
     id: eid++,
-    lon: p.lon + Math.sin(p.heading + 1.05) * (85 / 111320),
-    lat: p.lat + Math.cos(p.heading + 1.05) * (85 / 111320),
-    alt: p.alt + 28,
+    lon: o.lon,
+    lat: o.lat,
+    alt: o.alt,
     heading: p.heading,
     pitch: p.pitch,
     roll: 0,
     speed: p.speed,
-    hp: 88,
-    maxHp: 88,
+    hp: 96,
+    maxHp: 96,
     kind: "ace",
     ai: "intercept",
     gunCd: 0.25,
@@ -107,52 +130,59 @@ export function spawnWingman(): void {
     entity: null,
     exhaust: null,
     dead: false,
-    callsign: "GHOST-1",
-    spdMul: 1.06,
+    callsign,
+    spdMul: 1.04,
     friendly: true,
   };
-  const spawned = addJet("#7dd3fc", () => w, 5.2, "kestrel", "GHOST-1");
+  const spawned = addJet(color, () => w, 7.4, "kestrel", callsign);
   w.entity = spawned.jet;
   G.wingmen.push(w);
-  G.radio = "GHOST-1 윙맨 합류";
-  G.radioT = 2.4;
+  return w;
+}
+
+export function spawnWingman(): void {
+  makeWingman("GHOST-1", Math.PI / 2 * 0.55, 48, 14, "#7dd3fc");
+  makeWingman("GHOST-2", -Math.PI / 2 * 0.62, 44, 8, "#67e8f9");
+  G.radio = "GHOST-1 / GHOST-2 편대 합류";
+  G.radioT = 3.4;
 }
 
 export function spawnGroundTargets(): void {
-  const t = theaterById(G.theaterId);
-  const offsets: Array<[number, number]> = [
-    [0.07, 0.03],
-    [-0.05, 0.06],
-    [0.04, -0.05],
-  ];
-  for (let i = 0; i < offsets.length; i++) {
+  const p = G.player;
+  const ahead = [380, 620, 860];
+  for (let i = 0; i < 3; i++) {
+    const h = p.heading + (i === 1 ? -0.16 : i === 2 ? 0.16 : 0);
+    const pos = offsetFrom({ lon: p.lon, lat: p.lat, alt: p.alt, heading: h }, 0, ahead[i], 0);
     const g: GroundTarget = {
       id: eid++,
-      lon: t.lon + offsets[i][0],
-      lat: t.lat + offsets[i][1],
-      alt: 36,
-      hp: 96,
-      maxHp: 96,
+      lon: pos.lon,
+      lat: pos.lat,
+      alt: 48,
+      hp: 110,
+      maxHp: 110,
       kind: "site",
       entity: null,
       dead: false,
       label: `SITE-${i + 1}`,
     };
     g.entity = G.viewer.entities.add({
-      position: Cesium.Cartesian3.fromDegrees(g.lon, g.lat, g.alt + 40),
+      position: Cesium.Cartesian3.fromDegrees(g.lon, g.lat, 90),
       cylinder: {
-        length: 90,
-        topRadius: 16,
-        bottomRadius: 28,
-        material: Cesium.Color.fromCssColorString("#f97316").withAlpha(0.88),
+        length: 180,
+        topRadius: 22,
+        bottomRadius: 48,
+        material: Cesium.Color.fromCssColorString("#f97316").withAlpha(0.92),
         outline: true,
         outlineColor: Cesium.Color.WHITE,
       },
       label: {
-        text: g.label,
-        font: "13px sans-serif",
+        text: `▼ ${g.label} 파괴`,
+        font: "bold 16px sans-serif",
         fillColor: Cesium.Color.fromCssColorString("#fed7aa"),
-        pixelOffset: new Cesium.Cartesian2(0, -48),
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -64),
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
       },
     });
@@ -251,16 +281,16 @@ export function spawnWave(): void {
     const slot = i / Math.max(1, n - 1);
     const pattern = i % 3;
     let hdg = p.heading;
-    let meters = 280 + i * 50 + Math.random() * 40;
+    let meters = 210 + i * 36 + Math.random() * 24;
     if (pattern === 0) {
-      hdg = p.heading + (slot - 0.5) * 0.35;
-      meters = 300 + i * 45;
+      hdg = p.heading + (slot - 0.5) * 0.28;
+      meters = 200 + i * 32;
     } else if (pattern === 1) {
-      hdg = p.heading + 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = 380 + i * 40;
+      hdg = p.heading + 0.85 + (Math.random() - 0.5) * 0.15;
+      meters = 260 + i * 30;
     } else {
-      hdg = p.heading - 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = 360 + i * 40;
+      hdg = p.heading - 0.85 + (Math.random() - 0.5) * 0.15;
+      meters = 250 + i * 30;
     }
     const dist = meters / 111320;
     const kind = isBoss && i === 0 ? "leader" : isBoss || G.wave >= 8 ? "ace" : "bandit";

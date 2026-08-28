@@ -1,5 +1,5 @@
 import "./styles.css";
-import { CAMPAIGN, CRAFTS, SUBTITLE, THEATERS, TITLE, VERSION, theaterById, theaterBrief } from "./config";
+import { CAMPAIGN, CRAFTS, MISSION_KO, SUBTITLE, THEATERS, TITLE, VERSION, theaterById, theaterBrief } from "./config";
 import { G } from "./state";
 import { audio } from "./audio";
 import { applyQuality, initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
@@ -71,7 +71,7 @@ function renderTheaters(): void {
     b.type = "button";
     b.dataset.theater = t.id;
     b.className = "theater-chip" + (G.theaterId === t.id ? " active" : "");
-    b.textContent = t.name;
+    b.innerHTML = `<span>${t.name}</span><em>${MISSION_KO[t.mission]}</em>`;
     row.appendChild(b);
   }
 }
@@ -332,11 +332,20 @@ async function boot(): Promise<void> {
   audio.installUnlock();
   startLoop();
 
-  const qa = new URLSearchParams(location.search).has("qa") || new URLSearchParams(location.search).has("harness");
+  const params = new URLSearchParams(location.search);
+  const qa = params.has("qa") || params.has("harness");
   if (qa) {
     $("harnessDock").classList.add("show");
     setMode("campaign");
-    G.theaterId = "seoul";
+    const key = (params.get("qa") || params.get("harness") || "").toLowerCase();
+    G.theaterId =
+      key === "strike" || key === "nairobi"
+        ? "nairobi"
+        : key === "defend" || key === "rome"
+          ? "rome"
+          : key === "escort" || key === "vancouver"
+            ? "vancouver"
+            : "seoul";
     await startMission();
   }
 
