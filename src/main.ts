@@ -23,6 +23,8 @@ function refreshStart(): void {
   const cleared = s.theatersCleared?.length || 0;
   const circ = $("#circuitProg");
   if (circ) circ.textContent = `${cleared}/${CAMPAIGN.length}`;
+  const medals = $("#startMedals");
+  if (medals) medals.textContent = String(s.medals?.length || 0);
   renderCrafts();
   renderTheaters();
 }

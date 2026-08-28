@@ -91,7 +91,7 @@ html, body {
 .btn:disabled { opacity: 0.5; }
 
 .progress-row {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
   margin-bottom: 0.85rem; font-family: ui-monospace, monospace; font-size: 0.68rem;
 }
 .progress-row div {
@@ -120,8 +120,8 @@ html, body {
 }
 .theater-chip {
   border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
-  border-radius: 999px; padding: 7px 12px; font-size: 0.78rem; cursor: pointer;
-  min-height: 34px;
+  border-radius: 999px; padding: 5px 9px; font-size: 0.72rem; cursor: pointer;
+  min-height: 30px;
 }
 .theater-chip.active { border-color: var(--cyan); color: #e0f2fe; background: rgba(56,189,248,0.15); }
 

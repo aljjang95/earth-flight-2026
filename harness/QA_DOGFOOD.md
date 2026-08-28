@@ -78,7 +78,16 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 
 Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM.
 
-## v3.0.0 combat feel
+## v4.0.0 world campaign
+
+| Check | Result |
+| --- | --- |
+| 18-theater circuit chips | (dogfood) |
+| Strike ground sites (Nairobi/Rio) | (dogfood) |
+| Defend city HP (Rome/Paris/NYC) | (dogfood) |
+| Escort GHOST-1 (Vancouver/SF) | (dogfood) |
+| Hangar MEDAL counter | (dogfood) |
+
 
 | Check | Result |
 | --- | --- |

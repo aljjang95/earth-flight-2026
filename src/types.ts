@@ -70,6 +70,20 @@ export interface Enemy extends Pose {
   callsign: string;
   spdMul: number;
   friendly?: boolean;
+  hunt?: "player" | "wingman" | "city";
+}
+
+export interface GroundTarget {
+  id: number;
+  lon: number;
+  lat: number;
+  alt: number;
+  hp: number;
+  maxHp: number;
+  kind: "site" | "city";
+  entity: unknown;
+  dead: boolean;
+  label: string;
 }
 
 export interface Tracer {

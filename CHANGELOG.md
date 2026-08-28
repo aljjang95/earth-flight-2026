@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.0] - 2026-08-28
+### Added
+- World Circuit expanded to **18 theaters** (Mumbai, Nairobi, Rome, Berlin, Moscow, Vancouver).
+- Mission types honored in play: **strike** ground radar sites, **defend** city HP, **escort** GHOST-1 under fire.
+- Theater **medals** persist on save and show in the hangar.
+- Orange site boxes + city defend ring on the HUD.
+
 ## [3.0.0] - 2026-08-28
 ### Added
 - Friendly **GHOST-1 wingman** (cyan HUD box + radar) who hunts bandits with friendly gun tracers.

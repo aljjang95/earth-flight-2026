@@ -1,6 +1,6 @@
 import type { Craft, MissionKind, Rank, Theater, Weather } from "./types";
 
-export const VERSION = "3.0.0";
+export const VERSION = "4.0.0";
 export const TITLE = "EARTH FLIGHT";
 export const SUBTITLE = "ACE HORIZON · WORLD COMBAT";
 
@@ -45,6 +45,19 @@ export const THEATERS: Theater[] = [
     weather: "storm",
   },
   {
+    id: "mumbai",
+    name: "뭄바이",
+    region: "남아시아",
+    country: "인도",
+    lon: 72.8777,
+    lat: 19.076,
+    heading: 0.5,
+    briefing: "아라비아해 접근로. 뭄바이 상공의 침투기를 요격하라.",
+    enemyName: "아라비아해 편대",
+    mission: "intercept",
+    weather: "haze",
+  },
+  {
     id: "dubai",
     name: "두바이",
     region: "걸프",
@@ -58,6 +71,19 @@ export const THEATERS: Theater[] = [
     weather: "haze",
   },
   {
+    id: "nairobi",
+    name: "나이로비",
+    region: "동아프리카",
+    country: "케냐",
+    lon: 36.8219,
+    lat: -1.2921,
+    heading: 0.3,
+    briefing: "동아프리카 보급 거점. 지상 레이더 사이트를 타격하라.",
+    enemyName: "사바나 방공기",
+    mission: "strike",
+    weather: "clear",
+  },
+  {
     id: "cairo",
     name: "카이로",
     region: "나일",
@@ -69,6 +95,19 @@ export const THEATERS: Theater[] = [
     enemyName: "델타 습격편대",
     mission: "intercept",
     weather: "night",
+  },
+  {
+    id: "rome",
+    name: "로마",
+    region: "지중해",
+    country: "이탈리아",
+    lon: 12.4964,
+    lat: 41.9028,
+    heading: 0.35,
+    briefing: "티베르 상공. 수도 방공망을 사수하라.",
+    enemyName: "지중해 습격편대",
+    mission: "defend",
+    weather: "haze",
   },
   {
     id: "paris",
@@ -97,6 +136,32 @@ export const THEATERS: Theater[] = [
     weather: "storm",
   },
   {
+    id: "berlin",
+    name: "베를린",
+    region: "중유럽",
+    country: "독일",
+    lon: 13.405,
+    lat: 52.52,
+    heading: 0.25,
+    briefing: "중유럽 회랑. 폭풍 속에서 요격하라.",
+    enemyName: "중유럽 돌격편대",
+    mission: "intercept",
+    weather: "storm",
+  },
+  {
+    id: "moscow",
+    name: "모스크바",
+    region: "동유럽",
+    country: "러시아",
+    lon: 37.6173,
+    lat: 55.7558,
+    heading: 0.15,
+    briefing: "야간 방공. 모스크바 상공의 에이스를 격퇴하라.",
+    enemyName: "야간 방공 에이스",
+    mission: "intercept",
+    weather: "night",
+  },
+  {
     id: "nyc",
     name: "뉴욕",
     region: "대서양 관문",
@@ -121,6 +186,19 @@ export const THEATERS: Theater[] = [
     enemyName: "내륙 에이스",
     mission: "intercept",
     weather: "clear",
+  },
+  {
+    id: "vancouver",
+    name: "밴쿠버",
+    region: "태평양 북서",
+    country: "캐나다",
+    lon: -123.1216,
+    lat: 49.2827,
+    heading: 1.05,
+    briefing: "태평양 북서. 수송 편대를 엄호하며 제공권을 열어라.",
+    enemyName: "북서 차단편대",
+    mission: "escort",
+    weather: "haze",
   },
   {
     id: "sf",

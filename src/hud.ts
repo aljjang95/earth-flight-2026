@@ -250,6 +250,20 @@ export function drawHud(): void {
     c.globalAlpha = 1;
   }
 
+  for (const g of G.grounds) {
+    if (g.dead) continue;
+    const s = worldToScreen(g.lon, g.lat, g.alt + 40);
+    if (!s) continue;
+    c.strokeStyle = g.kind === "city" ? cyan : "#fb923c";
+    c.globalAlpha = 0.9;
+    c.strokeRect(s.x - 10, s.y - 10, 20, 20);
+    c.fillStyle = g.kind === "city" ? cyan : "#fb923c";
+    c.font = "10px ui-monospace, monospace";
+    c.textAlign = "center";
+    c.fillText(`${g.label} ${Math.round(g.hp)}`, s.x, s.y - 14);
+    c.globalAlpha = 1;
+  }
+
   for (const m of G.missiles) {
     if (m.dead) continue;
     const s = worldToScreen(m.lon, m.lat, m.alt);

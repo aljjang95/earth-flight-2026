@@ -8,10 +8,18 @@ export function updateEnemy(
   fire: { gun: (en: Enemy) => void; missile: (en: Enemy) => void },
 ): void {
   const p = G.player;
-  const d = distM(e.lon, e.lat, e.alt, p.lon, p.lat, p.alt);
-  const brg = bearingTo(e.lon, e.lat, p.lon, p.lat);
+  let focus = { lon: p.lon, lat: p.lat, alt: p.alt, heading: p.heading, speed: p.speed, cloak: G.cloaked };
+  if (e.hunt === "wingman") {
+    const w = G.wingmen.find((x) => !x.dead);
+    if (w) focus = { lon: w.lon, lat: w.lat, alt: w.alt, heading: w.heading, speed: w.speed, cloak: false };
+  } else if (e.hunt === "city") {
+    const city = G.grounds.find((g) => g.kind === "city" && !g.dead);
+    if (city) focus = { lon: city.lon, lat: city.lat, alt: 160, heading: 0, speed: 0, cloak: false };
+  }
+  const d = distM(e.lon, e.lat, e.alt, focus.lon, focus.lat, focus.alt);
+  const brg = bearingTo(e.lon, e.lat, focus.lon, focus.lat);
   const ata = wrapPi(brg - e.heading);
-  const aspect = wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading);
+  const aspect = wrapPi(bearingTo(focus.lon, focus.lat, e.lon, e.lat) - focus.heading);
 
   const turn = e.kind === "ace" ? 1.55 : e.kind === "leader" ? 1.32 : 1.18;
   const gunRange = e.kind === "ace" ? 1500 : 1250;
@@ -25,20 +33,20 @@ export function updateEnemy(
 
   let desired = brg;
   let desiredPitch = 0;
-  const dAlt = p.alt - e.alt;
+  const dAlt = focus.alt - e.alt;
 
   if (e.ai === "intercept") {
     const leadT = Math.min(1.1, d / 3800);
-    const lp = leadPoint(p.lon, p.lat, p.heading, p.speed, leadT);
+    const lp = leadPoint(focus.lon, focus.lat, focus.heading, focus.speed, leadT);
     desired = bearingTo(e.lon, e.lat, lp.lon, lp.lat);
     desiredPitch = Math.max(-0.45, Math.min(0.38, dAlt * 0.0007));
     e.speed = (92 + Math.min(70, d * 0.004)) * e.spdMul;
   } else if (e.ai === "guns") {
     desired = brg;
     desiredPitch = Math.max(-0.4, Math.min(0.32, Math.atan2(dAlt, Math.max(80, d))));
-    e.speed = (100 + p.speed * 0.25) * e.spdMul;
+    e.speed = (100 + focus.speed * 0.25) * e.spdMul;
     e.gunCd -= dt;
-    if (e.gunCd <= 0 && Math.abs(ata) < 0.28 && d < gunRange && (!G.cloaked || d < 260)) {
+    if (e.gunCd <= 0 && Math.abs(ata) < 0.28 && d < gunRange && (!focus.cloak || d < 260)) {
       fire.gun(e);
       e.gunCd = e.kind === "ace" ? 0.09 : 0.13;
     }
@@ -75,9 +83,10 @@ export function updateEnemy(
     e.mslCd = e.kind === "leader" ? 7.5 : e.kind === "ace" ? 9 : 13;
   }
 
-  if (d < 14000) {
+  const dPlayer = distM(e.lon, e.lat, e.alt, p.lon, p.lat, p.alt);
+  if (dPlayer < 14000) {
     const hour = clockHour(wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading));
-    if (d < 1800 && G.radioT <= 0) {
+    if (dPlayer < 1800 && G.radioT <= 0) {
       G.radio =
         `${e.callsign} ${hour}시` + (e.alt > p.alt + 80 ? " 하이" : e.alt < p.alt - 80 ? " 로우" : "");
       G.radioT = 2.4;

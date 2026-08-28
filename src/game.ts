@@ -165,6 +165,8 @@ export function exposeAceApi(startQa: () => Promise<void>): void {
       wave: G.wave,
       enemies: G.enemies.filter((e) => !e.dead).length,
       wingmen: G.wingmen.filter((w) => !w.dead).length,
+      grounds: G.grounds.filter((g) => !g.dead).length,
+      medals: G.save.medals?.length || 0,
       objective: G.objective,
     }),
     startQa,

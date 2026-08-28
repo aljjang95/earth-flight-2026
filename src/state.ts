@@ -1,5 +1,5 @@
 import { CRAFTS, THEATERS, VERSION } from "./config";
-import type { CamMode, Enemy, Missile, Mode, Player, Tracer, Quality } from "./types";
+import type { CamMode, Enemy, GroundTarget, Missile, Mode, Player, Tracer, Quality } from "./types";
 import { loadSave } from "./save";
 import type { SaveData } from "./types";
 
@@ -48,6 +48,7 @@ export const G = {
   } as Player,
   enemies: [] as Enemy[],
   wingmen: [] as Enemy[],
+  grounds: [] as GroundTarget[],
   tracers: [] as Tracer[],
   missiles: [] as Missile[],
   wave: 0,

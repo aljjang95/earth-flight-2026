@@ -1,6 +1,6 @@
 import { CAMPAIGN, CALLSIGNS, HARD_LOCK, LOCK_CONE, WAVES_PER_THEATER, craftById, rankFor, theaterById } from "./config";
 import { G } from "./state";
-import type { Enemy, Missile, Tracer } from "./types";
+import type { Enemy, GroundTarget, Missile, Tracer } from "./types";
 import { bearingTo, distM, moveBody, wrapPi } from "./math";
 import { audio } from "./audio";
 import { burstExplosion, ensurePointCollection, ensurePolylineCollection, hitSpark } from "./fx";
@@ -118,6 +118,94 @@ export function spawnWingman(): void {
   G.radioT = 2.4;
 }
 
+export function spawnGroundTargets(): void {
+  const t = theaterById(G.theaterId);
+  const offsets: Array<[number, number]> = [
+    [0.07, 0.03],
+    [-0.05, 0.06],
+    [0.04, -0.05],
+  ];
+  for (let i = 0; i < offsets.length; i++) {
+    const g: GroundTarget = {
+      id: eid++,
+      lon: t.lon + offsets[i][0],
+      lat: t.lat + offsets[i][1],
+      alt: 36,
+      hp: 96,
+      maxHp: 96,
+      kind: "site",
+      entity: null,
+      dead: false,
+      label: `SITE-${i + 1}`,
+    };
+    g.entity = G.viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(g.lon, g.lat, g.alt + 40),
+      cylinder: {
+        length: 90,
+        topRadius: 16,
+        bottomRadius: 28,
+        material: Cesium.Color.fromCssColorString("#f97316").withAlpha(0.88),
+        outline: true,
+        outlineColor: Cesium.Color.WHITE,
+      },
+      label: {
+        text: g.label,
+        font: "13px sans-serif",
+        fillColor: Cesium.Color.fromCssColorString("#fed7aa"),
+        pixelOffset: new Cesium.Cartesian2(0, -48),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+    });
+    G.grounds.push(g);
+  }
+}
+
+export function spawnCityDefense(): void {
+  const t = theaterById(G.theaterId);
+  const g: GroundTarget = {
+    id: eid++,
+    lon: t.lon,
+    lat: t.lat,
+    alt: 20,
+    hp: 170,
+    maxHp: 170,
+    kind: "city",
+    entity: null,
+    dead: false,
+    label: t.name,
+  };
+  g.entity = G.viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(g.lon, g.lat, 30),
+    ellipse: {
+      semiMajorAxis: 420,
+      semiMinorAxis: 420,
+      material: Cesium.Color.fromCssColorString("#38bdf8").withAlpha(0.22),
+      outline: true,
+      outlineColor: Cesium.Color.fromCssColorString("#7dd3fc"),
+      height: 24,
+    },
+    label: {
+      text: `DEFEND ${t.name}`,
+      font: "14px sans-serif",
+      fillColor: Cesium.Color.fromCssColorString("#e0f2fe"),
+      pixelOffset: new Cesium.Cartesian2(0, -36),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
+  G.grounds.push(g);
+}
+
+function clearGrounds(): void {
+  for (const g of G.grounds) {
+    try {
+      if (g.entity) G.viewer.entities.remove(g.entity);
+    } catch {
+      /* */
+    }
+  }
+  G.grounds.length = 0;
+}
+
 export function spawnWave(): void {
   G.wave += 1;
   G.theaterWave += 1;
@@ -131,11 +219,15 @@ export function spawnWave(): void {
   const hudWave = document.getElementById("hudWave");
   if (hudWave) hudWave.textContent = `${rank.name} ${G.wave}`;
   const th = theaterById(G.theaterId);
+  if (G.theaterWave === 1) {
+    if (th.mission === "strike") spawnGroundTargets();
+    if (th.mission === "defend") spawnCityDefense();
+  }
   G.objective =
     th.mission === "defend"
       ? "수도 방어 · 적기 전멸"
       : th.mission === "strike"
-        ? "타격 · 제공권 확보"
+        ? "타격 · 지상 사이트 파괴"
         : th.mission === "escort"
           ? "편대 엄호 · 요격"
           : "요격 · 적기 전멸";
@@ -194,6 +286,7 @@ export function spawnWave(): void {
       dead: false,
       callsign: `${CALLSIGNS[i % CALLSIGNS.length]}-${(i + 1).toString().padStart(2, "0")}`,
       spdMul: rank.spd * (kind === "ace" ? 1.12 : 1),
+      hunt: th.mission === "escort" && i % 3 === 0 ? "wingman" : th.mission === "defend" && i % 2 === 0 ? "city" : "player",
     };
     const color = kind === "leader" ? "#fbbf24" : kind === "ace" ? "#ef4444" : "#f87171";
     const spawned = addJet(color, () => e, kind === "leader" ? 7.4 : 6.4, kind, e.callsign);
@@ -343,6 +436,29 @@ export function fireWingmanGun(e: Enemy): void {
 
 export function fireEnemyMissile(e: Enemy): void {
   audio.missile();
+  const wing = e.hunt === "wingman" ? G.wingmen.find((w) => !w.dead) : null;
+  if (wing) {
+    const m: Missile = {
+      lon: e.lon,
+      lat: e.lat,
+      alt: e.alt,
+      heading: e.heading,
+      pitch: e.pitch,
+      speed: e.speed + 190,
+      t: 0,
+      fromPlayer: false,
+      targetEnemy: wing,
+      toPlayer: false,
+      dmg: 22 * G.difficulty,
+      trail: [],
+      entity: null,
+      dead: false,
+      flared: false,
+    };
+    m.entity = missileEntity(m, "#fb7185");
+    G.missiles.push(m);
+    return;
+  }
   G.rwr = true;
   G.incoming += 1;
   const m: Missile = {
@@ -581,6 +697,101 @@ export function damagePlayer(amount: number): void {
   }
 }
 
+export function killWingman(w: Enemy): void {
+  if (w.dead) return;
+  w.dead = true;
+  w.hp = 0;
+  audio.boom();
+  burstExplosion(w.lon, w.lat, w.alt, 1.1);
+  G.radio = "GHOST-1 격추";
+  G.radioT = 3;
+  toast("GHOST-1 DOWN");
+  if (w.entity) {
+    try {
+      G.viewer.entities.remove(w.entity);
+    } catch {
+      /* */
+    }
+    w.entity = null;
+  }
+}
+
+export function damageGround(g: GroundTarget, amount: number): void {
+  if (g.dead || g.kind === "city") return;
+  g.hp -= amount;
+  G.hitMark = 0.22;
+  hitSpark(g.lon, g.lat, g.alt + 40);
+  if (g.hp <= 0) killGround(g);
+}
+
+export function damageCity(amount: number): void {
+  const city = G.grounds.find((x) => x.kind === "city" && !x.dead);
+  if (!city) return;
+  city.hp = Math.max(0, city.hp - amount);
+  if (city.hp > 0) return;
+  city.dead = true;
+  audio.boom();
+  burstExplosion(city.lon, city.lat, 80, 2);
+  toast("수도 함락");
+  G.gameOver = true;
+  const go = document.getElementById("gameOver");
+  const gk = document.getElementById("goKills");
+  const gt = document.getElementById("goTime");
+  const gs = document.getElementById("goStats");
+  if (gk) gk.textContent = String(G.kills);
+  if (gt) gt.textContent = String(Math.round(G.aliveTime));
+  if (gs) gs.textContent = `${theaterById(G.theaterId).name} 방어 실패 · GOLD ${G.save.gold}`;
+  if (go) go.style.display = "flex";
+}
+
+export function killGround(g: GroundTarget): void {
+  if (g.dead) return;
+  g.dead = true;
+  g.hp = 0;
+  G.save.gold += 80;
+  addXp(G.save, 22);
+  writeSave(G.save);
+  audio.boom();
+  burstExplosion(g.lon, g.lat, g.alt + 40, 1.2);
+  toast(`${g.label} 파괴 +80G`);
+  if (g.entity) {
+    try {
+      G.viewer.entities.remove(g.entity);
+    } catch {
+      /* */
+    }
+    g.entity = null;
+  }
+  maybeFinishStrike();
+}
+
+function maybeFinishStrike(): void {
+  const th = theaterById(G.theaterId);
+  if (th.mission !== "strike") return;
+  const sitesLeft = G.grounds.filter((x) => !x.dead && x.kind === "site").length;
+  const airLeft = G.enemies.some((x) => !x.dead);
+  if (sitesLeft === 0 && !airLeft && G.theaterWave >= WAVES_PER_THEATER) {
+    void onTheaterClear();
+  }
+}
+
+function syncObjective(): void {
+  const th = theaterById(G.theaterId);
+  const air = G.enemies.filter((x) => !x.dead).length;
+  if (th.mission === "strike") {
+    const sites = G.grounds.filter((x) => !x.dead && x.kind === "site").length;
+    G.objective = `타격 · 사이트 ${sites} · 적기 ${air}`;
+  } else if (th.mission === "defend") {
+    const city = G.grounds.find((x) => x.kind === "city" && !x.dead);
+    G.objective = `방어 · 수도 HP ${city ? Math.round(city.hp) : 0} · 적기 ${air}`;
+  } else if (th.mission === "escort") {
+    const w = G.wingmen.some((x) => !x.dead);
+    G.objective = w ? `엄호 · GHOST-1 생존 · 적기 ${air}` : `엄호 실패 · 독력 요격 · 적기 ${air}`;
+  } else {
+    G.objective = `요격 · 적기 ${air}`;
+  }
+}
+
 function toast(text: string): void {
   const el = document.getElementById("killToast");
   if (!el) return;
@@ -657,6 +868,7 @@ function updateTracers(dt: number): void {
       }
     }
     if (b.fromPlayer) {
+      let hit = false;
       for (const e of G.enemies) {
         if (e.dead) continue;
         if (distM(b.lon, b.lat, b.alt, e.lon, e.lat, e.alt) < 48) {
@@ -675,7 +887,28 @@ function updateTracers(dt: number): void {
           }
           G.tracers.splice(i, 1);
           if (e.hp <= 0) killEnemy(e);
+          hit = true;
           break;
+        }
+      }
+      if (!hit) {
+        for (const g of G.grounds) {
+          if (g.dead || g.kind !== "site") continue;
+          if (distM(b.lon, b.lat, b.alt, g.lon, g.lat, g.alt + 40) < 85) {
+            damageGround(g, b.dmg);
+            try {
+              if (b.prim && pts) pts.remove(b.prim);
+            } catch {
+              /* */
+            }
+            try {
+              if (b.line && lines) lines.remove(b.line);
+            } catch {
+              /* */
+            }
+            G.tracers.splice(i, 1);
+            break;
+          }
         }
       }
     } else if (distM(b.lon, b.lat, b.alt, G.player.lon, G.player.lat, G.player.alt) < 38) {
@@ -692,6 +925,27 @@ function updateTracers(dt: number): void {
         /* */
       }
       G.tracers.splice(i, 1);
+    } else {
+      for (const w of G.wingmen) {
+        if (w.dead) continue;
+        if (distM(b.lon, b.lat, b.alt, w.lon, w.lat, w.alt) < 42) {
+          w.hp -= b.dmg;
+          hitSpark(w.lon, w.lat, w.alt);
+          try {
+            if (b.prim && pts) pts.remove(b.prim);
+          } catch {
+            /* */
+          }
+          try {
+            if (b.line && lines) lines.remove(b.line);
+          } catch {
+            /* */
+          }
+          G.tracers.splice(i, 1);
+          if (w.hp <= 0) killWingman(w);
+          break;
+        }
+      }
     }
   }
 }
@@ -708,6 +962,8 @@ function updateMissiles(dt: number): void {
     }
     if (m.fromPlayer && m.targetEnemy && !m.targetEnemy.dead) {
       steerTo(m, m.targetEnemy.lon, m.targetEnemy.lat, m.targetEnemy.alt, dt, 3.4);
+    } else if (m.targetEnemy && m.targetEnemy.friendly && !m.targetEnemy.dead) {
+      steerTo(m, m.targetEnemy.lon, m.targetEnemy.lat, m.targetEnemy.alt, dt, 2.6);
     } else if (m.toPlayer && !m.flared) {
       steerTo(m, G.player.lon, G.player.lat, G.player.alt, dt, 2.6);
     } else if (m.flared) {
@@ -723,6 +979,7 @@ function updateMissiles(dt: number): void {
     if (m.trail.length > 36) m.trail.shift();
 
     if (m.fromPlayer) {
+      let hit = false;
       for (const e of G.enemies) {
         if (e.dead) continue;
         if (distM(m.lon, m.lat, m.alt, e.lon, e.lat, e.alt) < 70) {
@@ -730,8 +987,28 @@ function updateMissiles(dt: number): void {
           burstExplosion(e.lon, e.lat, e.alt, 0.7);
           removeMissile(m, i);
           if (e.hp <= 0) killEnemy(e);
+          hit = true;
           break;
         }
+      }
+      if (!hit) {
+        for (const g of G.grounds) {
+          if (g.dead || g.kind !== "site") continue;
+          if (distM(m.lon, m.lat, m.alt, g.lon, g.lat, g.alt + 40) < 95) {
+            damageGround(g, m.dmg);
+            burstExplosion(g.lon, g.lat, g.alt + 40, 0.8);
+            removeMissile(m, i);
+            break;
+          }
+        }
+      }
+    } else if (m.targetEnemy && m.targetEnemy.friendly && !m.targetEnemy.dead) {
+      const w = m.targetEnemy;
+      if (distM(m.lon, m.lat, m.alt, w.lon, w.lat, w.alt) < 48) {
+        w.hp -= m.dmg;
+        burstExplosion(w.lon, w.lat, w.alt, 0.7);
+        removeMissile(m, i);
+        if (w.hp <= 0) killWingman(w);
       }
     } else if (!m.flared && distM(m.lon, m.lat, m.alt, G.player.lon, G.player.lat, G.player.alt) < 48) {
       damagePlayer(m.dmg);
@@ -760,22 +1037,37 @@ function removeMissile(m: Missile, i: number): void {
   G.missiles.splice(i, 1);
 }
 
+let theaterClearing = false;
+
 async function onTheaterClear(): Promise<void> {
+  if (theaterClearing || G.transiting) return;
+  theaterClearing = true;
   const id = G.theaterId;
+  const th = theaterById(id);
   if (!G.save.theatersCleared.includes(id)) G.save.theatersCleared.push(id);
+  if (!G.save.medals) G.save.medals = [];
+  const medal = `${id}:${th.mission}`;
+  if (!G.save.medals.includes(medal)) G.save.medals.push(medal);
+  if (th.mission === "escort" && G.wingmen.some((w) => !w.dead)) {
+    const extra = `${id}:escort-save`;
+    if (!G.save.medals.includes(extra)) G.save.medals.push(extra);
+  }
   G.save.gold += 220;
   G.save.diamonds += 2;
   addXp(G.save, 80);
   writeSave(G.save);
-  toast(`${theaterById(id).name} 확보`);
+  toast(`${th.name} 확보`);
+  clearGrounds();
   if (G.mode !== "campaign") {
     G.waveHold = 1.4;
+    theaterClearing = false;
     return;
   }
   const idx = CAMPAIGN.indexOf(id);
   if (idx < 0 || idx >= CAMPAIGN.length - 1) {
     showBanner("WORLD CIRCUIT", "지구 제공권 확보", "CAMPAIGN CLEAR");
     G.waveHold = 2.2;
+    theaterClearing = false;
     return;
   }
   const next = CAMPAIGN[idx + 1];
@@ -793,9 +1085,11 @@ async function onTheaterClear(): Promise<void> {
   G.player.roll = 0;
   applyTheaterMood(next);
   spawnClouds(t.lon, t.lat);
+  if (G.wingmen.every((w) => w.dead)) spawnWingman();
   G.paused = false;
   showBanner("TRANSIT", t.name, t.briefing);
   G.waveHold = 1.2;
+  theaterClearing = false;
 }
 
 function updateFlares(dt: number): void {
@@ -872,6 +1166,16 @@ export function updateCombat(dt: number): void {
   for (const w of G.wingmen) {
     if (!w.dead) updateWingman(w, dt, { gun: fireWingmanGun });
   }
+  const city = G.grounds.find((g) => g.kind === "city" && !g.dead);
+  if (city && !G.gameOver) {
+    for (const e of G.enemies) {
+      if (e.dead) continue;
+      if (distM(e.lon, e.lat, e.alt, city.lon, city.lat, city.alt) < 500) {
+        damageCity(5.5 * dt * G.difficulty);
+      }
+    }
+  }
+  syncObjective();
   updateLock(dt);
   updateTracers(dt);
   updateMissiles(dt);
@@ -912,8 +1216,14 @@ export function updateCombat(dt: number): void {
     writeSave(G.save);
     toast(`WAVE CLEAR +${gold}G`);
     G.enemies.length = 0;
+    const th = theaterById(G.theaterId);
+    const sitesLeft = G.grounds.filter((g) => !g.dead && g.kind === "site").length;
     if (G.theaterWave >= WAVES_PER_THEATER) {
-      void onTheaterClear();
+      if (th.mission === "strike" && sitesLeft > 0) {
+        syncObjective();
+      } else {
+        void onTheaterClear();
+      }
     } else {
       G.waveHold = 1.25;
     }
@@ -921,6 +1231,7 @@ export function updateCombat(dt: number): void {
 }
 
 export function clearCombatEntities(): void {
+  clearGrounds();
   for (const e of [...G.enemies, ...G.wingmen]) {
     try {
       if (e.entity) G.viewer.entities.remove(e.entity);

@@ -53,6 +53,11 @@ check("wingman", all.includes("spawnWingman") && all.includes("updateWingman") &
 check("theater-mood", all.includes("applyTheaterMood"), "theater weather / time of day");
 check("gfx-select", html.includes("gfxSelect") && all.includes("G.save.quality"), "hangar graphics preset");
 check("hit-mark", all.includes("hitMark"), "gun HIT marker");
+check("campaign-18", all.includes('id: "moscow"') && all.includes('id: "vancouver"') && all.includes('id: "nairobi"') && all.includes('id: "mumbai"') && all.includes('id: "rome"') && all.includes('id: "berlin"'), "18-theater world circuit");
+check("strike-grounds", all.includes("spawnGroundTargets") && all.includes("GroundTarget"), "strike ground targets");
+check("defend-city", all.includes("spawnCityDefense") && all.includes("damageCity"), "defend city HP");
+check("escort-hunt", all.includes('"wingman"') && all.includes("killWingman"), "escort wingman hunters");
+check("medals", all.includes("medals") && html.includes("startMedals"), "theater medals");
 
 const pass = findings.every((f) => f.ok);
 const report = {
