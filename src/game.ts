@@ -6,7 +6,7 @@ import { updateFlight } from "./flight";
 import { clearCombatEntities, spawnPlayerCraft, spawnWave, updateCombat, fireMissile, tryFlare, trySkill, tryPotion } from "./combat";
 import { drawHud } from "./hud";
 import { tickHarness } from "./harness-client";
-import { bindInput, input, keys } from "./input";
+import { bindInput, input } from "./input";
 import { applySolarNoon, lookAtTheater, spawnClouds } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
@@ -25,9 +25,6 @@ export function startLoop(): void {
       return;
     }
     if (!G.flying) return;
-    if (keys.has("KeyC")) {
-      /* handled as edge in keydown in bindGameKeys */
-    }
     if (!G.paused && !G.gameOver && !G.transiting) {
       updateFlight(dt);
       if (G.mode !== "free") updateCombat(dt);

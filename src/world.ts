@@ -1,5 +1,6 @@
 import { ALL_LOCATIONS, theaterById } from "./config";
 import { G } from "./state";
+import { setMenuLook } from "./camera";
 
 export function isMobile(): boolean {
   return matchMedia("(max-width: 768px), (pointer: coarse)").matches;
@@ -39,7 +40,7 @@ export async function initViewer(): Promise<void> {
     msaaSamples: G.quality === "high" ? 4 : 1,
   };
 
-  if (token || Cesium.Ion?.defaultAccessToken) {
+  if (token) {
     try {
       opts.terrain = Cesium.Terrain.fromWorldTerrain();
     } catch {
@@ -157,11 +158,20 @@ export function spawnClouds(lon: number, lat: number): void {
 export function lookAtTheater(id: string, height = 420_000, duration = 2.4): void {
   const t = theaterById(id);
   applySolarNoon(t.lon, t.lat);
+  G.menuFly = true;
   G.viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
     orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
     duration,
     easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
+    complete: () => {
+      setMenuLook(t.lon, t.lat, height);
+      G.menuFly = false;
+    },
+    cancel: () => {
+      setMenuLook(t.lon, t.lat, height);
+      G.menuFly = false;
+    },
   });
 }
 

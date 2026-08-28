@@ -7,6 +7,7 @@ let ctx: CanvasRenderingContext2D | null = null;
 
 export function bindHud(): void {
   canvas = document.getElementById("hudCanvas") as HTMLCanvasElement;
+  if (!canvas) return;
   ctx = canvas.getContext("2d");
   resizeHud();
   window.addEventListener("resize", resizeHud);

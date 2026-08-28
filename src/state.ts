@@ -80,6 +80,7 @@ export const G = {
   theaters: THEATERS,
   transiting: false,
   prologue: false,
+  menuFly: false,
 };
 
 export function resetCombatStats(): void {

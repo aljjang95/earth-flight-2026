@@ -3,21 +3,24 @@ import { G } from "./state";
 let menuHeading = 0.2;
 let menuLat = 18;
 let menuLon = 22;
+let menuAlt = 16_800_000;
 
-export function setMenuLook(lon: number, lat: number): void {
+export function setMenuLook(lon: number, lat: number, alt = 16_800_000): void {
   menuLon = lon;
   menuLat = lat;
+  menuAlt = alt;
 }
 
 export function updateMenuCamera(dt: number): void {
-  if (!G.viewer || G.flying || G.transiting) return;
-  menuHeading += 0.035 * dt;
+  if (!G.viewer || G.flying || G.transiting || G.menuFly) return;
+  menuHeading += menuAlt > 8_000_000 ? 0.035 * dt : 0.012 * dt;
+  const pitch = menuAlt > 8_000_000 ? -88 : -42;
   try {
     G.viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(menuLon, menuLat, 16_800_000),
+      destination: Cesium.Cartesian3.fromDegrees(menuLon, menuLat, menuAlt),
       orientation: {
         heading: menuHeading * 0.15,
-        pitch: Cesium.Math.toRadians(-88),
+        pitch: Cesium.Math.toRadians(pitch),
         roll: 0,
       },
     });

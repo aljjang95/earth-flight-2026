@@ -8,7 +8,10 @@ import { bindGameKeys, exposeAceApi, returnToBase, startLoop, startMission } fro
 import { fireMissile, tryFlare, tryPotion, trySkill } from "./combat";
 import { writeSave } from "./save";
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const $ = <T extends HTMLElement>(id: string) => {
+  const key = id.startsWith("#") ? id.slice(1) : id;
+  return document.getElementById(key) as T;
+};
 
 function refreshStart(): void {
   const s = G.save;
@@ -248,11 +251,11 @@ async function boot(): Promise<void> {
   if (savedToken) G.ionToken = savedToken;
   $("loadingMsg").textContent = "지구 궤도 진입 중...";
   await initViewer();
+  $("loading").classList.add("hidden");
   bindHud();
   bindGameKeys();
   wireUi();
   startLoop();
-  $("loading").classList.add("hidden");
 
   const qa = new URLSearchParams(location.search).has("qa") || new URLSearchParams(location.search).has("harness");
   if (qa) {
@@ -272,7 +275,13 @@ async function boot(): Promise<void> {
 
 void boot().catch((err) => {
   console.error(err);
-  $("loadingMsg").textContent = "부트 실패: " + (err as Error).message;
+  try {
+    $("loading").classList.add("hidden");
+    const msg = $("loadingMsg");
+    if (msg) msg.textContent = "부트 실패: " + (err as Error).message;
+  } catch {
+    /* */
+  }
 });
 
 document.title = `${TITLE} — ${SUBTITLE} v${VERSION}`;
