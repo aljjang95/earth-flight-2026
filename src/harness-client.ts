@@ -3,6 +3,10 @@ import { G } from "./state";
 import { theaterById } from "./config";
 import { applyQuality } from "./world";
 
+let qualityGrace = 0;
+let lowHits = 0;
+let highHits = 0;
+
 export function tickHarness(dt: number): void {
   G.frames += 1;
   G.fpsT += dt;
@@ -10,8 +14,28 @@ export function tickHarness(dt: number): void {
     G.fps = G.frames / G.fpsT;
     G.frames = 0;
     G.fpsT = 0;
-    if (G.fps > 2 && G.fps < 22 && G.quality === "high") applyQuality("medium");
-    else if (G.fps > 2 && G.fps < 16 && G.quality === "medium") applyQuality("low");
+    if (G.flying) qualityGrace += 0.5;
+    else {
+      qualityGrace = 0;
+      lowHits = 0;
+      highHits = 0;
+    }
+    if (qualityGrace > 5 && G.fps > 2) {
+      if (G.fps < 22) {
+        lowHits += 1;
+        highHits = 0;
+      } else if (G.fps > 40) {
+        highHits += 1;
+        lowHits = 0;
+      } else {
+        lowHits = 0;
+        highHits = 0;
+      }
+      if (lowHits >= 4 && G.quality === "high") applyQuality("medium");
+      else if (lowHits >= 4 && G.quality === "medium") applyQuality("low");
+      else if (highHits >= 6 && G.quality === "medium") applyQuality("high");
+      else if (highHits >= 6 && G.quality === "low") applyQuality("medium");
+    }
   }
   const beat = {
     t: Date.now(),

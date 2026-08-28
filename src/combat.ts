@@ -228,7 +228,6 @@ const flareSparks: Spark[] = [];
 
 function spawnTracer(fromPlayer: boolean, lon: number, lat: number, alt: number, heading: number, pitch: number, speed: number, dmg: number): void {
   const pts = ensurePointCollection();
-  const lines = ensurePolylineCollection();
   const color = fromPlayer ? Cesium.Color.fromCssColorString("#fde68a") : Cesium.Color.fromCssColorString("#fb7185");
   const prim = pts.add({
     position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
@@ -238,14 +237,22 @@ function spawnTracer(fromPlayer: boolean, lon: number, lat: number, alt: number,
     outlineWidth: 1,
     disableDepthTestDistance: Number.POSITIVE_INFINITY,
   });
-  const line = lines.add({
-    positions: [
-      Cesium.Cartesian3.fromDegrees(lon, lat, alt),
-      Cesium.Cartesian3.fromDegrees(lon, lat, alt),
-    ],
-    width: fromPlayer ? 3.4 : 2.8,
-    material: Cesium.Material.fromType("Color", { color: color.withAlpha(0.9) }),
-  });
+  let line: unknown = null;
+  try {
+    const lines = ensurePolylineCollection();
+    line = lines.add({
+      positions: [
+        Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+        Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+      ],
+      width: fromPlayer ? 3.4 : 2.8,
+    });
+    if (line && (line as { material?: unknown }).material) {
+      (line as { material: unknown }).material = Cesium.Material.fromType("Color", { color: color.withAlpha(0.9) });
+    }
+  } catch {
+    line = null;
+  }
   const t: Tracer = {
     lon,
     lat,
