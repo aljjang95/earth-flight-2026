@@ -7,3 +7,5 @@ dist/
 .vite/
 .vercel/
 *.local
+harness/state/*.json
+harness/state/*.log

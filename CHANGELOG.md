@@ -1,17 +1,20 @@
 # Changelog
 
-## [1.3.4] - 2026-08-24
+## [2.1.0] - 2026-08-28
 ### Added
-- **Cinematic prologue** (v1.3.4): bilingual timed sequence + camera dive from orbit to low altitude after "이륙하기". Skip button included.
-- **Daegu location** (사용자 위치 기반) in location select + LOCATIONS.
-- Progressive lock visual polish: cyan corners while locking → gold on hard LOCK (0.82).
-- Themed favicon (Earth + jet silhouette, blue-red gradient).
-- Honest continuous release train with real playable build now in repo.
+- **Grok 4.7 product harness** in-game: supervisor heartbeat, orchestrator ack, self-improve patches (quality / AI / lock cone / spawn range).
+- **16-theater world circuit** (Hong Kong, Istanbul, Cape Town, Moscow added to the campaign).
+- Afterburner exhaust, falling wreckage, sun bloom, medium-quality bloom, 60fps desktop target.
+- Centered Ace Combat chase camera; quality selector (auto/high/medium/low).
+- Unit tests for math, world circuit, and self-improve planner. PRD in `prd/world-combat.md`.
 
-### Fixed / Improved
-- Replaced non-playable placeholder with the full v1.3.3 combat game (progressive lock, WAVE CLEAR 1.15s, 6 crafts, economy, mobile stick, boss, etc.).
-- Version strings synchronized to 1.3.4.
-- Leftover Vite template files noted for cleanup.
+### Fixed
+- Missile / flare / skill no longer double-fire from overlapping key handlers.
+- Theater globe `flyTo` now `cancelFlight()` before a new snap.
+- First-person hides engine glow so it does not fill the cockpit.
 
-### Notes
-Full combat systems from 1.3.3 remain intact. Prologue is a pure presentation layer that does not alter combat logic.
+## [2.0.2] - 2026-08-28
+World combat rewrite (campaign transit, enemy guns/missiles, flares, lofted jets, Esri globe without ion token).
+
+## [1.3.4] - 2026-08-24
+Cinematic prologue, Daegu, progressive lock polish. Monolith retired in 2.x.
