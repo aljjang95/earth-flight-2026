@@ -272,8 +272,14 @@ function wireUi(): void {
     returnToBase();
     refreshStart();
   });
-  $("photoBtn")?.addEventListener("click", () => takePhoto());
-  $("creditsBtn")?.addEventListener("click", () => showCredits(true));
+  $("photoBtn")?.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    takePhoto();
+  });
+  $("creditsBtn")?.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    showCredits(true);
+  });
   $("creditsClose")?.addEventListener("click", () => showCredits(false));
   $("retryBtn").addEventListener("click", () => {
     $("gameOver").style.display = "none";

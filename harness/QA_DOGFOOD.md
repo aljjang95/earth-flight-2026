@@ -76,33 +76,31 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 | Default medium quality, ~28fps | PASS |
 | Tokyo/NYC/Seoul **chips** snap globe | PASS (after cancelFlight / mid-click rebuild fix) |
 
-Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM.
+Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM (headless Chrome). Interactive Chrome dogfood on DISPLAY=:1 still renders Esri.
+
+## v3.0.0 combat feel
+
+| Check | Result |
+| --- | --- |
+| GHOST-1 wingman | PASS (`GHOST-1 윙맨 합류` on `/?qa=1`) |
+| Theater weather / time of day | PASS (서울 CLEAR, 도쿄 요격·연무, 뉴욕 방어·연무) |
+| Hangar 그래픽 preset | PASS (중 / 권장) |
+| HIT marker + kills | PASS (KILL + HIT during guns) |
+
+## v4.0.0 world campaign
+
+| Check | Result |
+| --- | --- |
+| 18-theater circuit chips | PASS (CIRCUIT 0/18) |
+| Strike / defend / escort briefs | PASS on hangar chips |
+| Hangar MEDAL counter | PASS |
 
 ## v5.0.0 production polish
 
 | Check | Result |
 | --- | --- |
-| Tutorial overlay (non-qa) | (dogfood) |
-| `/?qa=1` skips tutorial | (dogfood) |
-| Pause snapshot + credits | (dogfood) |
-| Hangar medal chips | (dogfood) |
-| Version 5.0.0 + `npm run qa` | (pending) |
-
-
-| Check | Result |
-| --- | --- |
-| 18-theater circuit chips | (dogfood) |
-| Strike ground sites (Nairobi/Rio) | (dogfood) |
-| Defend city HP (Rome/Paris/NYC) | (dogfood) |
-| Escort GHOST-1 (Vancouver/SF) | (dogfood) |
-| Hangar MEDAL counter | (dogfood) |
-
-
-| Check | Result |
-| --- | --- |
-| GHOST-1 wingman + cyan HUD | (dogfood) |
-| Theater weather / time of day | (dogfood) |
-| Hangar 그래픽 preset persisted | (dogfood) |
-| HIT marker + objective line | (dogfood) |
-| Orchestrator `npm run qa` | (pending) |
+| Version 5.0.0 hangar + combat | PASS |
+| `/?qa=1` skips tutorial, boots Seoul combat | PASS |
+| Pause 스냅샷 + 크레딧 | PASS (SNAPSHOT timestamp; credits in pause) |
+| Orchestrator 27 checks | PASS |
 
