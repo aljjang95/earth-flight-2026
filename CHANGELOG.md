@@ -6,6 +6,7 @@
 - Missiles dumb-fire without a hard lock so `M` always launches a visible dart + trail.
 - Flares last longer and toast on deploy.
 - Default Cesium quality is medium (no bloom/HDR/MSAA) with 30fps cap for playable dogfights; steps up if the GPU can.
+- Theater chips snap the globe onto the city immediately (no `cancelFlight` eating the next `flyTo`); chips use pointerdown delegation so the row is not rebuilt mid-click.
 
 ## [2.0.1] - 2026-08-28
 ### Added

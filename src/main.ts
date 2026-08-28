@@ -28,23 +28,36 @@ function refreshStart(): void {
 
 function selectTheater(id: string): void {
   G.theaterId = id;
-  ($("locationSelect") as HTMLSelectElement).value = id;
+  const sel = $("locationSelect") as HTMLSelectElement;
+  if (sel && sel.value !== id) sel.value = id;
   const t = theaterById(id);
   $("briefPreview").textContent = t.briefing || `${t.name} · 자유 비행 가능`;
   lookAtTheater(id, 480_000, 2.3);
-  renderTheaters();
+  const row = $("theaterRow");
+  row?.querySelectorAll(".theater-chip").forEach((b) => {
+    b.classList.toggle("active", (b as HTMLElement).dataset.theater === id);
+  });
 }
 
 function renderTheaters(): void {
   const row = $("theaterRow");
   if (!row) return;
+  if (!row.dataset.bound) {
+    row.dataset.bound = "1";
+    row.addEventListener("pointerdown", (e) => {
+      const btn = (e.target as HTMLElement).closest("[data-theater]") as HTMLElement | null;
+      if (!btn?.dataset.theater) return;
+      e.preventDefault();
+      selectTheater(btn.dataset.theater);
+    });
+  }
   row.innerHTML = "";
   for (const t of THEATERS) {
     const b = document.createElement("button");
     b.type = "button";
+    b.dataset.theater = t.id;
     b.className = "theater-chip" + (G.theaterId === t.id ? " active" : "");
     b.textContent = t.name;
-    b.onclick = () => selectTheater(t.id);
     row.appendChild(b);
   }
 }

@@ -211,16 +211,20 @@ export function lookAtTheater(id: string, height = 420_000, duration = 2.4): voi
   G.menuFly = true;
   setMenuLook(t.lon, t.lat, height);
   const dest = Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height);
-  const orientation = { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 };
+  const overview = Cesium.Cartesian3.fromDegrees(t.lon, t.lat, Math.max(height * 8, 3_200_000));
+  const close = { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 };
   try {
-    G.viewer.camera.cancelFlight();
+    G.viewer.camera.setView({
+      destination: overview,
+      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-70), roll: 0 },
+    });
   } catch {
     /* */
   }
   try {
     G.viewer.camera.flyTo({
       destination: dest,
-      orientation,
+      orientation: close,
       duration,
       easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
       complete: () => {
@@ -231,7 +235,7 @@ export function lookAtTheater(id: string, height = 420_000, duration = 2.4): voi
       },
     });
   } catch {
-    G.viewer.camera.setView({ destination: dest, orientation });
+    G.viewer.camera.setView({ destination: dest, orientation: close });
     G.menuFly = false;
   }
   window.setTimeout(() => {

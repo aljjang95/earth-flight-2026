@@ -120,7 +120,8 @@ html, body {
 }
 .theater-chip {
   border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
-  border-radius: 999px; padding: 4px 9px; font-size: 0.72rem; cursor: pointer;
+  border-radius: 999px; padding: 7px 12px; font-size: 0.78rem; cursor: pointer;
+  min-height: 34px;
 }
 .theater-chip.active { border-color: var(--cyan); color: #e0f2fe; background: rgba(56,189,248,0.15); }
 
