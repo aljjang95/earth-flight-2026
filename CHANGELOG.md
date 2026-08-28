@@ -1,17 +1,20 @@
 # Changelog
 
+## [2.0.0] - 2026-08-28
+### Added
+- **World Circuit campaign**: 12 real-Earth theaters with transit cinematics (Seoul → Sydney).
+- **Live fighter combat**: enemy jets fire visible tracers and homing missiles; player flares + RWR.
+- **Custom fighter glTF** (distinct player / bandit / ace / leader silhouettes).
+- Ace Combat-style **canvas HUD**, clouds, bloom/FXAA, explosion particles, missile glow trails.
+- **Token-optional** Esri satellite globe so the game starts without Cesium ion signup.
+- Grok 4.7 **product harness**: supervisor heartbeat + orchestrator self-improvement QA (`npm run qa`).
+- Modular Vite + TypeScript source (`src/`).
+
+### Fixed
+- Shop buttons no longer steal combat/free mode (`mode-play` vs `mode-btn`).
+- Default combat camera is a 3/4 chase view so the jet is visible; first-person optional.
+- Duplicate `play.html` monolith replaced with a redirect into the live game.
+
 ## [1.3.4] - 2026-08-24
 ### Added
-- **Cinematic prologue** (v1.3.4): bilingual timed sequence + camera dive from orbit to low altitude after "이륙하기". Skip button included.
-- **Daegu location** (사용자 위치 기반) in location select + LOCATIONS.
-- Progressive lock visual polish: cyan corners while locking → gold on hard LOCK (0.82).
-- Themed favicon (Earth + jet silhouette, blue-red gradient).
-- Honest continuous release train with real playable build now in repo.
-
-### Fixed / Improved
-- Replaced non-playable placeholder with the full v1.3.3 combat game (progressive lock, WAVE CLEAR 1.15s, 6 crafts, economy, mobile stick, boss, etc.).
-- Version strings synchronized to 1.3.4.
-- Leftover Vite template files noted for cleanup.
-
-### Notes
-Full combat systems from 1.3.3 remain intact. Prologue is a pure presentation layer that does not alter combat logic.
+- Cinematic prologue, Daegu location, progressive lock polish, themed favicon.
