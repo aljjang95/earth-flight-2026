@@ -2,6 +2,9 @@ export type Mode = "free" | "combat" | "campaign";
 export type EnemyKind = "bandit" | "ace" | "leader";
 export type AiMode = "intercept" | "guns" | "break" | "extend" | "rejoin";
 export type CamMode = "first" | "third";
+export type MissionKind = "intercept" | "strike" | "escort" | "defend";
+export type Weather = "clear" | "haze" | "storm" | "night";
+export type Quality = "high" | "medium" | "low";
 
 export interface Theater {
   id: string;
@@ -13,6 +16,8 @@ export interface Theater {
   heading: number;
   briefing: string;
   enemyName: string;
+  mission: MissionKind;
+  weather: Weather;
 }
 
 export interface Craft {
@@ -64,6 +69,7 @@ export interface Enemy extends Pose {
   dead: boolean;
   callsign: string;
   spdMul: number;
+  friendly?: boolean;
 }
 
 export interface Tracer {
@@ -112,6 +118,9 @@ export interface SaveData {
   owned: string[];
   equipped: string;
   theatersCleared: string[];
+  quality?: Quality;
+  tutorialDone?: boolean;
+  medals?: string[];
 }
 
 export interface Rank {

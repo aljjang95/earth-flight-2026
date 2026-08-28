@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0] - 2026-08-28
+### Added
+- Friendly **GHOST-1 wingman** (cyan HUD box + radar) who hunts bandits with friendly gun tracers.
+- Theater **weather / time of day** mood (`clear` / `haze` / `storm` / `night`) via `applyTheaterMood`.
+- Hangar **그래픽** preset (low / medium / high) persisted on save.
+- Gun **HIT** marker and mission objective line on the canvas HUD.
+- Briefing line shows mission kind (요격·타격·엄호·방어) and weather.
+
 ## [2.0.2] - 2026-08-28
 ### Fixed
 - Hangar theater fly no longer dies when a previous `flyTo` cancels (NYC/dropdown).

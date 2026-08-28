@@ -78,3 +78,13 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 
 Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM.
 
+## v3.0.0 combat feel
+
+| Check | Result |
+| --- | --- |
+| GHOST-1 wingman + cyan HUD | (dogfood) |
+| Theater weather / time of day | (dogfood) |
+| Hangar 그래픽 preset persisted | (dogfood) |
+| HIT marker + objective line | (dogfood) |
+| Orchestrator `npm run qa` | (pending) |
+

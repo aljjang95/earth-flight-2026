@@ -48,6 +48,7 @@ export function tickHarness(dt: number): void {
     theaterName: theaterById(G.theaterId).name,
     wave: G.wave,
     enemies: G.enemies.filter((e) => !e.dead).length,
+    wingmen: G.wingmen.filter((w) => !w.dead).length,
     missiles: G.missiles.filter((m) => !m.dead).length,
     hp: Math.round(G.player.hp),
     kills: G.kills,

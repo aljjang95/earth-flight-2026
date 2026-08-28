@@ -20,7 +20,7 @@ function esriLayer(): any {
 
 export async function initViewer(): Promise<void> {
   G.isMobile = isMobile();
-  G.quality = "medium";
+  G.quality = G.save.quality || "medium";
   const token = G.ionToken.trim();
   if (token) Cesium.Ion.defaultAccessToken = token;
 
@@ -137,10 +137,10 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
   }
 }
 
-export function applySolarNoon(lon: number, _lat: number): void {
+export function applySolarNoon(lon: number, _lat: number, localHour = 12): void {
   try {
+    const utcHour = (localHour - lon / 15 + 24) % 24;
     const now = new Date();
-    const utcHour = (12 - lon / 15 + 24) % 24;
     const solar = new Date(
       Date.UTC(
         now.getUTCFullYear(),
@@ -152,9 +152,25 @@ export function applySolarNoon(lon: number, _lat: number): void {
     );
     G.viewer.clock.currentTime = Cesium.JulianDate.fromDate(solar);
     G.viewer.clock.shouldAnimate = false;
-    G.viewer.scene.globe.enableLighting = true;
+    G.viewer.scene.globe.enableLighting = G.quality !== "low";
   } catch {
     /* clock optional */
+  }
+}
+
+export function applyTheaterMood(id: string): void {
+  const t = theaterById(id);
+  const hour = t.weather === "night" ? 4 : t.weather === "haze" ? 16.5 : t.weather === "storm" ? 14 : 12;
+  applySolarNoon(t.lon, t.lat, hour);
+  if (!G.viewer) return;
+  try {
+    const fog =
+      t.weather === "storm" ? 0.000032 : t.weather === "haze" ? 0.000018 : t.weather === "night" ? 0.000016 : 0.00001;
+    G.viewer.scene.fog.density = fog;
+    G.viewer.scene.skyAtmosphere.brightnessShift = t.weather === "night" ? -0.12 : 0.14;
+    G.viewer.scene.skyAtmosphere.saturationShift = t.weather === "storm" ? -0.08 : 0.08;
+  } catch {
+    /* mood optional */
   }
 }
 
@@ -206,7 +222,7 @@ export function spawnClouds(lon: number, lat: number): void {
 
 export function lookAtTheater(id: string, height = 420_000, duration = 2.4): void {
   const t = theaterById(id);
-  applySolarNoon(t.lon, t.lat);
+  applyTheaterMood(id);
   const gen = ++flyGen;
   G.menuFly = true;
   setMenuLook(t.lon, t.lat, height);
@@ -273,7 +289,7 @@ export async function transitCinematic(fromId: string, toId: string): Promise<vo
   if (ov) ov.classList.add("show");
   if (title) title.textContent = to.name;
   if (sub) sub.textContent = `${from.region}  →  ${to.region} · ${to.country}`;
-  applySolarNoon(to.lon, to.lat);
+  applyTheaterMood(toId);
   await fly(from.lon, from.lat, 3_800_000, 2.2);
   await fly(to.lon, to.lat, 3_800_000, 3.6);
   spawnClouds(to.lon, to.lat);

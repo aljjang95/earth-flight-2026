@@ -3,11 +3,11 @@ import { G, resetCombatStats } from "./state";
 import { audio } from "./audio";
 import { updateMenuCamera, updateCamera, toggleCamera } from "./camera";
 import { updateFlight } from "./flight";
-import { clearCombatEntities, spawnPlayerCraft, spawnWave, updateCombat, fireMissile, tryFlare, trySkill, tryPotion } from "./combat";
+import { clearCombatEntities, spawnPlayerCraft, spawnWave, spawnWingman, updateCombat, fireMissile, tryFlare, trySkill, tryPotion } from "./combat";
 import { drawHud } from "./hud";
 import { tickHarness } from "./harness-client";
 import { bindInput, input } from "./input";
-import { applySolarNoon, lookAtTheater, spawnClouds, syncHangarTheater } from "./world";
+import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
 
@@ -74,9 +74,10 @@ export async function startMission(): Promise<void> {
   G.player.speed = 155;
   G.player.throttle = 0.74;
   resetCombatStats();
-  applySolarNoon(t.lon, t.lat);
+  applyTheaterMood(t.id);
   spawnClouds(t.lon, t.lat);
   spawnPlayerCraft();
+  if (G.mode !== "free") spawnWingman();
   ensurePointCollection();
   G.flying = true;
   G.menuOrbit = false;
@@ -163,6 +164,8 @@ export function exposeAceApi(startQa: () => Promise<void>): void {
       kills: G.kills,
       wave: G.wave,
       enemies: G.enemies.filter((e) => !e.dead).length,
+      wingmen: G.wingmen.filter((w) => !w.dead).length,
+      objective: G.objective,
     }),
     startQa,
     skipPrologue: () => {

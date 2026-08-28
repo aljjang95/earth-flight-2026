@@ -139,7 +139,7 @@ export function drawHud(): void {
   c.font = "12px ui-monospace, monospace";
   c.fillStyle = cyan;
   const th = theaterById(G.theaterId);
-  c.fillText(`${th.name} · ${th.region}`, 16, 28);
+  c.fillText(`${th.name} · ${th.region} · ${th.weather.toUpperCase()}`, 16, 28);
   c.fillStyle = "rgba(226,232,240,0.75)";
   c.fillText(`THR ${Math.round(p.throttle * 100)}%   G ${p.g.toFixed(1)}   ${G.tilesBackend.toUpperCase()} · ${G.quality.toUpperCase()}`, 16, 46);
 
@@ -157,6 +157,25 @@ export function drawHud(): void {
   if (G.mode !== "free") {
     c.fillText(`WAVE ${G.wave}  ${G.waveDown}/${G.waveGoal || 0}  GOLD ${G.save.gold}`, hpX, hpY + 38);
     c.fillText(`FLARE ${G.player.flares}   MSL ${G.missileCd > 0 ? Math.ceil(G.missileCd) + "s" : "RDY"}`, hpX, hpY + 54);
+    if (G.objective) c.fillText(G.objective, hpX, hpY + 70);
+  }
+
+  if (G.hitMark > 0) {
+    c.strokeStyle = gold;
+    c.globalAlpha = Math.min(1, G.hitMark * 4);
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(cx - 18, cy - 18);
+    c.lineTo(cx - 6, cy - 6);
+    c.moveTo(cx + 18, cy - 18);
+    c.lineTo(cx + 6, cy - 6);
+    c.moveTo(cx - 18, cy + 18);
+    c.lineTo(cx - 6, cy + 6);
+    c.moveTo(cx + 18, cy + 18);
+    c.lineTo(cx + 6, cy + 6);
+    c.stroke();
+    c.lineWidth = 1.2;
+    c.globalAlpha = 1;
   }
 
   if (G.radioT > 0 && G.radio) {
@@ -217,6 +236,20 @@ export function drawHud(): void {
     c.globalAlpha = 1;
   }
 
+  for (const w of G.wingmen) {
+    if (w.dead) continue;
+    const s = worldToScreen(w.lon, w.lat, w.alt);
+    if (!s) continue;
+    c.strokeStyle = cyan;
+    c.globalAlpha = 0.85;
+    c.strokeRect(s.x - 8, s.y - 8, 16, 16);
+    c.fillStyle = cyan;
+    c.font = "10px ui-monospace, monospace";
+    c.textAlign = "center";
+    c.fillText(w.callsign, s.x, s.y - 12);
+    c.globalAlpha = 1;
+  }
+
   for (const m of G.missiles) {
     if (m.dead) continue;
     const s = worldToScreen(m.lon, m.lat, m.alt);
@@ -234,14 +267,23 @@ export function drawHud(): void {
   const radar = document.getElementById("radar");
   if (radar && G.mode !== "free") {
     const range = 12000;
-    const live: Array<{ e: (typeof G.enemies)[number]; x: number; y: number }> = [];
+    const live: Array<{ kind: "lock" | "leader" | "bandit" | "wing"; x: number; y: number }> = [];
     for (const e of G.enemies) {
       if (e.dead) continue;
       const d = distM(p.lon, p.lat, p.alt, e.lon, e.lat, e.alt);
       if (d > range) continue;
       const brg = wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading);
       const r = (d / range) * 48;
-      live.push({ e, x: 55 + Math.sin(brg) * r, y: 55 - Math.cos(brg) * r });
+      const kind = e === G.locked ? "lock" : e.kind === "leader" ? "leader" : "bandit";
+      live.push({ kind, x: 55 + Math.sin(brg) * r, y: 55 - Math.cos(brg) * r });
+    }
+    for (const w of G.wingmen) {
+      if (w.dead) continue;
+      const d = distM(p.lon, p.lat, p.alt, w.lon, w.lat, w.alt);
+      if (d > range) continue;
+      const brg = wrapPi(bearingTo(p.lon, p.lat, w.lon, w.lat) - p.heading);
+      const r = (d / range) * 48;
+      live.push({ kind: "wing", x: 55 + Math.sin(brg) * r, y: 55 - Math.cos(brg) * r });
     }
     let dots = radar.querySelectorAll(".radar-dot");
     while (dots.length < live.length) {
@@ -260,12 +302,15 @@ export function drawHud(): void {
       dot.style.display = "block";
       dot.style.left = item.x + "px";
       dot.style.top = item.y + "px";
-      if (item.e === G.locked) {
+      if (item.kind === "lock") {
         dot.style.background = "#fde68a";
         dot.style.boxShadow = "0 0 8px #fde68a";
-      } else if (item.e.kind === "leader") {
+      } else if (item.kind === "leader") {
         dot.style.background = "#fbbf24";
         dot.style.boxShadow = "0 0 6px #fbbf24";
+      } else if (item.kind === "wing") {
+        dot.style.background = "#7dd3fc";
+        dot.style.boxShadow = "0 0 6px #7dd3fc";
       } else {
         dot.style.background = "#f43f5e";
         dot.style.boxShadow = "0 0 6px #f43f5e";

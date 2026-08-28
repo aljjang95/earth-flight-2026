@@ -1,6 +1,6 @@
-import type { Craft, Rank, Theater } from "./types";
+import type { Craft, MissionKind, Rank, Theater, Weather } from "./types";
 
-export const VERSION = "2.0.2";
+export const VERSION = "3.0.0";
 export const TITLE = "EARTH FLIGHT";
 export const SUBTITLE = "ACE HORIZON · WORLD COMBAT";
 
@@ -15,6 +15,8 @@ export const THEATERS: Theater[] = [
     heading: 1.4,
     briefing: "수도 상공에 적 전투기 편대가 침투했다. 한강 상공의 제공권을 확보하라.",
     enemyName: "침공 무인편대",
+    mission: "intercept",
+    weather: "clear",
   },
   {
     id: "tokyo",
@@ -26,6 +28,8 @@ export const THEATERS: Theater[] = [
     heading: 0.8,
     briefing: "수도권 방공망이 뚫렸다. 도쿄 만 상공에서 요격하라.",
     enemyName: "태평양 침투기",
+    mission: "intercept",
+    weather: "haze",
   },
   {
     id: "singapore",
@@ -37,6 +41,8 @@ export const THEATERS: Theater[] = [
     heading: 0.4,
     briefing: "해협 상공을 봉쇄 중인 적 요격기를 격퇴하고 항로를 열어라.",
     enemyName: "해협 차단편대",
+    mission: "intercept",
+    weather: "storm",
   },
   {
     id: "dubai",
@@ -48,6 +54,8 @@ export const THEATERS: Theater[] = [
     heading: 1.1,
     briefing: "걸프 상공의 에이스 편대가 연안 도시를 위협한다. 교전 개시.",
     enemyName: "걸프 에이스",
+    mission: "intercept",
+    weather: "haze",
   },
   {
     id: "cairo",
@@ -59,6 +67,8 @@ export const THEATERS: Theater[] = [
     heading: 0.2,
     briefing: "나일 델타 상공. 저고도 침투기를 요격하라.",
     enemyName: "델타 습격편대",
+    mission: "intercept",
+    weather: "night",
   },
   {
     id: "paris",
@@ -70,6 +80,8 @@ export const THEATERS: Theater[] = [
     heading: 0.4,
     briefing: "센 강 상공에 적 전투기가 출현했다. 수도를 사수하라.",
     enemyName: "서유럽 침공기",
+    mission: "defend",
+    weather: "haze",
   },
   {
     id: "london",
@@ -81,6 +93,8 @@ export const THEATERS: Theater[] = [
     heading: 0.3,
     briefing: "템스 상공. 해협을 넘어온 편대와 도그파이트를 벌여라.",
     enemyName: "해협 돌격편대",
+    mission: "intercept",
+    weather: "storm",
   },
   {
     id: "nyc",
@@ -92,6 +106,8 @@ export const THEATERS: Theater[] = [
     heading: 0.6,
     briefing: "맨해튼 상공 제공권 전투. 항구로 접근하는 적기를 막아라.",
     enemyName: "대서양 편대",
+    mission: "defend",
+    weather: "haze",
   },
   {
     id: "chicago",
@@ -103,6 +119,8 @@ export const THEATERS: Theater[] = [
     heading: 0.9,
     briefing: "내륙 상공에서 적 에이스가 대기 중이다. 요격 후 서부로 진격하라.",
     enemyName: "내륙 에이스",
+    mission: "intercept",
+    weather: "clear",
   },
   {
     id: "sf",
@@ -114,6 +132,8 @@ export const THEATERS: Theater[] = [
     heading: 1.0,
     briefing: "만 상공. 골든게이트를 기점으로 태평양 방면을 열어라.",
     enemyName: "태평양 전선기",
+    mission: "escort",
+    weather: "haze",
   },
   {
     id: "rio",
@@ -125,6 +145,8 @@ export const THEATERS: Theater[] = [
     heading: 0.5,
     briefing: "코파카바나 상공의 적 편대를 격추하고 남반구 전선을 유지하라.",
     enemyName: "남대서양 편대",
+    mission: "strike",
+    weather: "clear",
   },
   {
     id: "sydney",
@@ -136,19 +158,21 @@ export const THEATERS: Theater[] = [
     heading: 0.2,
     briefing: "최종 전구. 하버 상공에서 적 주력 에이스 편대와 결전하라.",
     enemyName: "종말 에이스",
+    mission: "intercept",
+    weather: "clear",
   },
 ];
 
 export const FREE_EXTRA: Theater[] = [
-  { id: "daegu", name: "대구", region: "영남", country: "대한민국", lon: 128.6014, lat: 35.8714, heading: 0.9, briefing: "", enemyName: "" },
-  { id: "anyang", name: "안양", region: "경기", country: "대한민국", lon: 126.9569, lat: 37.3943, heading: 0.4, briefing: "", enemyName: "" },
-  { id: "busan", name: "부산", region: "남해", country: "대한민국", lon: 129.0756, lat: 35.1796, heading: 0.2, briefing: "", enemyName: "" },
-  { id: "osaka", name: "오사카", region: "간사이", country: "일본", lon: 135.5023, lat: 34.6937, heading: 0.5, briefing: "", enemyName: "" },
-  { id: "hk", name: "홍콩", region: "남중국", country: "중국", lon: 114.1694, lat: 22.3193, heading: 0.7, briefing: "", enemyName: "" },
-  { id: "delhi", name: "델리", region: "남아시아", country: "인도", lon: 77.209, lat: 28.6139, heading: 0.3, briefing: "", enemyName: "" },
-  { id: "istanbul", name: "이스탄불", region: "보스포루스", country: "튀르키예", lon: 28.9784, lat: 41.0082, heading: 0.6, briefing: "", enemyName: "" },
-  { id: "la", name: "로스앤젤레스", region: "서부", country: "미국", lon: -118.2437, lat: 34.0522, heading: 1.2, briefing: "", enemyName: "" },
-  { id: "capetown", name: "케이프타운", region: "희망봉", country: "남아공", lon: 18.4241, lat: -33.9249, heading: 0.4, briefing: "", enemyName: "" },
+  { id: "daegu", name: "대구", region: "영남", country: "대한민국", lon: 128.6014, lat: 35.8714, heading: 0.9, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "anyang", name: "안양", region: "경기", country: "대한민국", lon: 126.9569, lat: 37.3943, heading: 0.4, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "busan", name: "부산", region: "남해", country: "대한민국", lon: 129.0756, lat: 35.1796, heading: 0.2, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "osaka", name: "오사카", region: "간사이", country: "일본", lon: 135.5023, lat: 34.6937, heading: 0.5, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "hk", name: "홍콩", region: "남중국", country: "중국", lon: 114.1694, lat: 22.3193, heading: 0.7, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "delhi", name: "델리", region: "남아시아", country: "인도", lon: 77.209, lat: 28.6139, heading: 0.3, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "istanbul", name: "이스탄불", region: "보스포루스", country: "튀르키예", lon: 28.9784, lat: 41.0082, heading: 0.6, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "la", name: "로스앤젤레스", region: "서부", country: "미국", lon: -118.2437, lat: 34.0522, heading: 1.2, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
+  { id: "capetown", name: "케이프타운", region: "희망봉", country: "남아공", lon: 18.4241, lat: -33.9249, heading: 0.4, briefing: "", enemyName: "", mission: "intercept", weather: "clear" },
 ];
 
 export const ALL_LOCATIONS: Theater[] = [...THEATERS, ...FREE_EXTRA];
@@ -278,6 +302,25 @@ export function theaterById(id: string): Theater {
 
 export function craftById(id: string): Craft {
   return CRAFTS.find((c) => c.id === id) || CRAFTS[0];
+}
+
+export const MISSION_KO: Record<MissionKind, string> = {
+  intercept: "요격",
+  strike: "타격",
+  escort: "엄호",
+  defend: "방어",
+};
+
+export const WEATHER_KO: Record<Weather, string> = {
+  clear: "맑음",
+  haze: "연무",
+  storm: "폭풍",
+  night: "야간",
+};
+
+export function theaterBrief(t: Theater): string {
+  if (!t.briefing) return `${t.name} · 자유 비행 가능`;
+  return `${t.briefing} · ${MISSION_KO[t.mission]} · ${WEATHER_KO[t.weather]}`;
 }
 
 export const WAVES_PER_THEATER = 3;

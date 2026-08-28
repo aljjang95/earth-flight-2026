@@ -61,6 +61,8 @@ export function updateEnemy(
   if (e.alt < 90) e.alt = 90;
   if (e.alt > 9000) e.alt = 9000;
 
+  if (e.friendly) return;
+
   e.mslCd -= dt;
   if (
     e.mslCd <= 0 &&
@@ -80,5 +82,51 @@ export function updateEnemy(
         `${e.callsign} ${hour}시` + (e.alt > p.alt + 80 ? " 하이" : e.alt < p.alt - 80 ? " 로우" : "");
       G.radioT = 2.4;
     }
+  }
+}
+
+export function updateWingman(
+  w: Enemy,
+  dt: number,
+  fire: { gun: (en: Enemy) => void },
+): void {
+  const foes = G.enemies.filter((e) => !e.dead);
+  let tgt: Enemy | null = null;
+  let best = 1e12;
+  for (const e of foes) {
+    const d = distM(w.lon, w.lat, w.alt, e.lon, e.lat, e.alt);
+    if (d < best) {
+      best = d;
+      tgt = e;
+    }
+  }
+  const p = G.player;
+  if (!tgt) {
+    const slot = 90 / 111320;
+    const wantLon = p.lon + Math.sin(p.heading + 0.9) * slot;
+    const wantLat = p.lat + Math.cos(p.heading + 0.9) * slot;
+    const brg = bearingTo(w.lon, w.lat, wantLon, wantLat);
+    const dh = wrapPi(brg - w.heading);
+    w.heading += Math.max(-1.2, Math.min(1.2, dh * 2)) * dt;
+    w.roll = dh * 0.8;
+    w.pitch += ((p.pitch - w.pitch) * 2 + (p.alt + 40 - w.alt) * 0.0004) * dt;
+    w.speed = p.speed * 0.96;
+    moveBody(w, dt);
+    return;
+  }
+  const brg = bearingTo(w.lon, w.lat, tgt.lon, tgt.lat);
+  const ata = wrapPi(brg - w.heading);
+  const dh = wrapPi(brg - w.heading);
+  w.heading += Math.max(-1.5, Math.min(1.5, dh * 2.2)) * dt;
+  w.roll = Math.max(-1, Math.min(1, dh));
+  const dAlt = tgt.alt - w.alt;
+  w.pitch += (Math.max(-0.4, Math.min(0.35, dAlt * 0.0008)) - w.pitch) * 3 * dt;
+  w.speed = 110 * w.spdMul;
+  moveBody(w, dt);
+  if (w.alt < 90) w.alt = 90;
+  w.gunCd -= dt;
+  if (w.gunCd <= 0 && Math.abs(ata) < 0.32 && best < 1400) {
+    fire.gun(w);
+    w.gunCd = 0.11;
   }
 }

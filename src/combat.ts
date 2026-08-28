@@ -5,9 +5,9 @@ import { bearingTo, distM, moveBody, wrapPi } from "./math";
 import { audio } from "./audio";
 import { burstExplosion, ensurePointCollection, ensurePolylineCollection, hitSpark } from "./fx";
 import { addXp, writeSave } from "./save";
-import { updateEnemy } from "./ai";
+import { updateEnemy, updateWingman } from "./ai";
 import { jetModelUri, missileModelUri } from "./models";
-import { transitCinematic, spawnClouds, applySolarNoon } from "./world";
+import { transitCinematic, spawnClouds, applyTheaterMood } from "./world";
 import { input, keys } from "./input";
 
 let eid = 1;
@@ -86,6 +86,38 @@ export function spawnPlayerCraft(): void {
   });
 }
 
+export function spawnWingman(): void {
+  const p = G.player;
+  const w: Enemy = {
+    id: eid++,
+    lon: p.lon + Math.sin(p.heading + 1.05) * (85 / 111320),
+    lat: p.lat + Math.cos(p.heading + 1.05) * (85 / 111320),
+    alt: p.alt + 28,
+    heading: p.heading,
+    pitch: p.pitch,
+    roll: 0,
+    speed: p.speed,
+    hp: 88,
+    maxHp: 88,
+    kind: "ace",
+    ai: "intercept",
+    gunCd: 0.25,
+    mslCd: 99,
+    flareCd: 0,
+    entity: null,
+    exhaust: null,
+    dead: false,
+    callsign: "GHOST-1",
+    spdMul: 1.06,
+    friendly: true,
+  };
+  const spawned = addJet("#7dd3fc", () => w, 5.2, "kestrel", "GHOST-1");
+  w.entity = spawned.jet;
+  G.wingmen.push(w);
+  G.radio = "GHOST-1 윙맨 합류";
+  G.radioT = 2.4;
+}
+
 export function spawnWave(): void {
   G.wave += 1;
   G.theaterWave += 1;
@@ -98,6 +130,15 @@ export function spawnWave(): void {
   G.locked = null;
   const hudWave = document.getElementById("hudWave");
   if (hudWave) hudWave.textContent = `${rank.name} ${G.wave}`;
+  const th = theaterById(G.theaterId);
+  G.objective =
+    th.mission === "defend"
+      ? "수도 방어 · 적기 전멸"
+      : th.mission === "strike"
+        ? "타격 · 제공권 확보"
+        : th.mission === "escort"
+          ? "편대 엄호 · 요격"
+          : "요격 · 적기 전멸";
   showBanner("INCOMING", `WAVE ${G.wave}`, rank.name + (isBoss ? " · ACE" : ""));
   if (isBoss) {
     const bb = document.getElementById("bossBanner");
@@ -294,6 +335,10 @@ export function fireMissile(free = false): void {
 
 export function fireEnemyGun(e: Enemy): void {
   spawnTracer(false, e.lon, e.lat, e.alt, e.heading, e.pitch, e.speed + 380, (7 + Math.random() * 6) * G.difficulty);
+}
+
+export function fireWingmanGun(e: Enemy): void {
+  spawnTracer(true, e.lon, e.lat, e.alt, e.heading, e.pitch, e.speed + 400, 9);
 }
 
 export function fireEnemyMissile(e: Enemy): void {
@@ -616,6 +661,7 @@ function updateTracers(dt: number): void {
         if (e.dead) continue;
         if (distM(b.lon, b.lat, b.alt, e.lon, e.lat, e.alt) < 48) {
           e.hp -= b.dmg * (Math.random() < 0.12 ? 2 : 1);
+          G.hitMark = 0.28;
           hitSpark(e.lon, e.lat, e.alt);
           try {
             if (b.prim && pts) pts.remove(b.prim);
@@ -745,7 +791,7 @@ async function onTheaterClear(): Promise<void> {
   G.player.heading = t.heading;
   G.player.pitch = -0.04;
   G.player.roll = 0;
-  applySolarNoon(t.lon, t.lat);
+  applyTheaterMood(next);
   spawnClouds(t.lon, t.lat);
   G.paused = false;
   showBanner("TRANSIT", t.name, t.briefing);
@@ -780,6 +826,7 @@ function updateFlares(dt: number): void {
 
 export function updateCombat(dt: number): void {
   G.aliveTime += dt;
+  G.hitMark = Math.max(0, G.hitMark - dt);
   G.fireCd = Math.max(0, G.fireCd - dt);
   G.missileCd = Math.max(0, G.missileCd - dt);
   G.flareCd = Math.max(0, G.flareCd - dt);
@@ -821,6 +868,9 @@ export function updateCombat(dt: number): void {
 
   for (const e of G.enemies) {
     if (!e.dead) updateEnemy(e, dt, { gun: fireEnemyGun, missile: fireEnemyMissile });
+  }
+  for (const w of G.wingmen) {
+    if (!w.dead) updateWingman(w, dt, { gun: fireWingmanGun });
   }
   updateLock(dt);
   updateTracers(dt);
@@ -871,7 +921,7 @@ export function updateCombat(dt: number): void {
 }
 
 export function clearCombatEntities(): void {
-  for (const e of G.enemies) {
+  for (const e of [...G.enemies, ...G.wingmen]) {
     try {
       if (e.entity) G.viewer.entities.remove(e.entity);
     } catch {
@@ -891,6 +941,7 @@ export function clearCombatEntities(): void {
     }
   }
   G.enemies.length = 0;
+  G.wingmen.length = 0;
   G.missiles.length = 0;
   G.tracers.length = 0;
   flareSparks.length = 0;

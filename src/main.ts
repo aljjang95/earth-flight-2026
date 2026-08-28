@@ -1,8 +1,9 @@
 import "./styles.css";
-import { CAMPAIGN, CRAFTS, SUBTITLE, THEATERS, TITLE, VERSION, theaterById } from "./config";
+import { CAMPAIGN, CRAFTS, SUBTITLE, THEATERS, TITLE, VERSION, theaterById, theaterBrief } from "./config";
 import { G } from "./state";
 import { audio } from "./audio";
-import { initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
+import { applyQuality, initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
+import type { Quality } from "./types";
 import { bindHud } from "./hud";
 import { bindGameKeys, exposeAceApi, returnToBase, startLoop, startMission } from "./game";
 import { fireMissile, tryFlare, tryPotion, trySkill } from "./combat";
@@ -31,7 +32,7 @@ function selectTheater(id: string): void {
   const sel = $("locationSelect") as HTMLSelectElement;
   if (sel && sel.value !== id) sel.value = id;
   const t = theaterById(id);
-  $("briefPreview").textContent = t.briefing || `${t.name} · 자유 비행 가능`;
+  $("briefPreview").textContent = theaterBrief(t);
   lookAtTheater(id, 480_000, 2.3);
   const row = $("theaterRow");
   row?.querySelectorAll(".theater-chip").forEach((b) => {
@@ -194,6 +195,11 @@ async function onTakeoff(): Promise<void> {
   const loc = ($("locationSelect") as HTMLSelectElement).value;
   G.theaterId = loc;
   G.difficulty = parseFloat(($("diffSelect") as HTMLSelectElement).value) || 1;
+  const gfx = (($("gfxSelect") as HTMLSelectElement | null)?.value || G.save.quality || "medium") as Quality;
+  G.save.quality = gfx;
+  G.quality = gfx;
+  applyQuality(gfx);
+  writeSave(G.save);
   $("startBtn").setAttribute("disabled", "true");
   try {
     await runPrologue();
@@ -216,6 +222,18 @@ function wireUi(): void {
     b.addEventListener("click", () => setMode((b as HTMLElement).dataset.mode as "free" | "combat" | "campaign"));
   });
   setMode("campaign");
+
+  const gfxSel = $("gfxSelect") as HTMLSelectElement | null;
+  if (gfxSel) {
+    gfxSel.value = G.save.quality || G.quality || "medium";
+    gfxSel.addEventListener("change", () => {
+      const q = gfxSel.value as Quality;
+      G.save.quality = q;
+      G.quality = q;
+      applyQuality(q);
+      writeSave(G.save);
+    });
+  }
 
   const onLoc = () => selectTheater(($("locationSelect") as HTMLSelectElement).value);
   $("locationSelect").addEventListener("change", onLoc);
@@ -276,7 +294,7 @@ function wireUi(): void {
   visualViewport?.addEventListener("resize", resizeViewer);
 
   refreshStart();
-  $("briefPreview").textContent = theaterById("seoul").briefing;
+  $("briefPreview").textContent = theaterBrief(theaterById("seoul"));
 }
 
 async function boot(): Promise<void> {

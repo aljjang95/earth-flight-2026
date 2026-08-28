@@ -32,8 +32,9 @@ const all = files.map((f) => f.text).join("\n");
 const html = read("index.html");
 const pkg = JSON.parse(read("package.json"));
 const version = read("VERSION").trim();
+const major = parseInt(version.split(".")[0], 10);
 
-check("version-sync", pkg.version === version && version.startsWith("2."), `pkg=${pkg.version} VERSION=${version}`);
+check("version-sync", pkg.version === version && major >= 3, `pkg=${pkg.version} VERSION=${version}`);
 check("no-counter-template", !existsSync(join(root, "src/counter.ts")), "Vite counter leftover removed");
 check("theaters-12", (all.match(/id: "sydney"/) && all.match(/id: "seoul"/) && (all.match(/id: "/g) || []).length >= 12), "world theaters present");
 check("enemy-guns", all.includes("fireEnemyGun"), "enemy cannon tracers");
@@ -48,6 +49,10 @@ check("no-token-required", html.includes("없으면 위성") || all.includes("es
 check("mode-buttons-isolated", html.includes("mode-play") && !html.includes('class="mode-btn"'), "shop buttons no longer steal game mode");
 check("hud-canvas", html.includes("hudCanvas") && all.includes("drawHud"), "Ace Combat HUD canvas");
 check("qa-hook", all.includes("__ACE") && html.includes("src/main.ts"), "dogfood API + Vite entry");
+check("wingman", all.includes("spawnWingman") && all.includes("updateWingman") && all.includes("fireWingmanGun"), "friendly GHOST-1 wingman");
+check("theater-mood", all.includes("applyTheaterMood"), "theater weather / time of day");
+check("gfx-select", html.includes("gfxSelect") && all.includes("G.save.quality"), "hangar graphics preset");
+check("hit-mark", all.includes("hitMark"), "gun HIT marker");
 
 const pass = findings.every((f) => f.ok);
 const report = {

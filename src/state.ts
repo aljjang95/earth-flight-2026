@@ -1,5 +1,5 @@
 import { CRAFTS, THEATERS, VERSION } from "./config";
-import type { CamMode, Enemy, Missile, Mode, Player, Tracer } from "./types";
+import type { CamMode, Enemy, Missile, Mode, Player, Tracer, Quality } from "./types";
 import { loadSave } from "./save";
 import type { SaveData } from "./types";
 
@@ -16,7 +16,7 @@ export const G = {
   theaterId: "seoul",
   campaignIndex: 0,
   tilesBackend: "imagery" as string,
-  quality: "medium" as "high" | "medium" | "low",
+  quality: "medium" as Quality,
   isMobile: false,
   ionToken: "",
   fps: 0,
@@ -47,6 +47,7 @@ export const G = {
     flares: 6,
   } as Player,
   enemies: [] as Enemy[],
+  wingmen: [] as Enemy[],
   tracers: [] as Tracer[],
   missiles: [] as Missile[],
   wave: 0,
@@ -78,6 +79,9 @@ export const G = {
   radioT: 0,
   rwr: false,
   incoming: 0,
+  hitMark: 0,
+  objective: "",
+  tutorial: false,
   save: loadSave() as SaveData,
   equipped: "sparrow",
   crafts: CRAFTS,
@@ -110,4 +114,7 @@ export function resetCombatStats(): void {
   G.paused = false;
   G.rwr = false;
   G.incoming = 0;
+  G.hitMark = 0;
+  G.objective = "";
+  G.wingmen.length = 0;
 }
