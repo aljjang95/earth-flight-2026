@@ -1,6 +1,6 @@
 import type { Craft, Rank, Theater } from "./types";
 
-export const VERSION = "2.1.0";
+export const VERSION = "2.1.1";
 export const TITLE = "EARTH FLIGHT";
 export const SUBTITLE = "ACE HORIZON · WORLD COMBAT";
 
@@ -197,7 +197,7 @@ export const ALL_LOCATIONS: Theater[] = [...THEATERS, ...FREE_EXTRA];
 export const CAMPAIGN = THEATERS.map((t) => t.id);
 
 export const RANKS: Rank[] = [
-  { name: "훈련", minWave: 1, enemyHp: 36, count: 3, spd: 1.0, goldMul: 1 },
+  { name: "훈련", minWave: 1, enemyHp: 32, count: 2, spd: 0.95, goldMul: 1 },
   { name: "교전", minWave: 2, enemyHp: 48, count: 4, spd: 1.08, goldMul: 1.2 },
   { name: "전장", minWave: 4, enemyHp: 62, count: 5, spd: 1.18, goldMul: 1.5 },
   { name: "제공권", minWave: 7, enemyHp: 78, count: 6, spd: 1.3, goldMul: 1.85 },

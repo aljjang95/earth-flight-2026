@@ -65,6 +65,10 @@ check("mode-buttons-isolated", html.includes("mode-play") && !html.includes('cla
 check("hud-canvas", html.includes("hudCanvas") && all.includes("drawHud"), "Ace Combat HUD canvas");
 check("prd", prd.includes("월드 서킷") && prd.includes("16"), "PRD aligned with 16-theater circuit");
 check("qa-hook", all.includes("__ACE") && html.includes("src/main.ts"), "dogfood API + Vite entry");
+check("spawn-protect", all.includes("spawnProtect") && all.includes("MERGE SAFE"), "spawn protection + HUD cue");
+check("software-gl", all.includes("isSoftwareRenderer") && all.includes("bootQuality"), "software GL quality boot");
+check("hangar-lock", all.includes("mission-live") && all.includes("syncMissionChrome"), "QA hangar overlay cannot cover combat");
+check("improve-fast", all.includes("IMPROVE_INTERVAL") && all.includes("FPS_QUALITY_FLOOR"), "self-improve ticks on FPS floor");
 
 const pass = findings.every((f) => f.ok);
 const report = {

@@ -153,6 +153,10 @@ export function drawHud(): void {
   c.fillStyle = "#e2e8f0";
   c.font = "11px ui-monospace, monospace";
   c.fillText(`HP ${Math.round(p.hp)}`, hpX, hpY + 22);
+  if (G.spawnProtect > 0) {
+    c.fillStyle = "#4ade80";
+    c.fillText(`MERGE SAFE ${G.spawnProtect.toFixed(1)}s`, hpX, hpY + 70);
+  }
 
   if (G.mode !== "free") {
     c.fillText(`WAVE ${G.wave}  ${G.waveDown}/${G.waveGoal || 0}  GOLD ${G.save.gold}`, hpX, hpY + 38);

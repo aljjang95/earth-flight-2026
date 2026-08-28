@@ -1,6 +1,7 @@
 import { ALL_LOCATIONS, theaterById } from "./config";
 import { G } from "./state";
 import { setMenuLook } from "./camera";
+import { bootFrameRate, bootQuality, isSoftwareRenderer } from "./gfx";
 
 let flyGen = 0;
 
@@ -18,9 +19,25 @@ function esriLayer(): any {
   );
 }
 
+export function probeWebglRenderer(): string {
+  if (typeof document === "undefined") return "";
+  try {
+    const c = document.createElement("canvas");
+    const gl = (c.getContext("webgl2") || c.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return "none";
+    const ext = gl.getExtension("WEBGL_debug_renderer_info") as { UNMASKED_RENDERER_WEBGL: number } | null;
+    if (ext) return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "");
+    return String(gl.getParameter(gl.RENDERER) || "");
+  } catch {
+    return "";
+  }
+}
+
 export async function initViewer(): Promise<void> {
   G.isMobile = isMobile();
-  G.quality = "medium";
+  G.renderer = probeWebglRenderer();
+  G.softwareGL = isSoftwareRenderer(G.renderer);
+  G.quality = bootQuality({ software: G.softwareGL, mobile: G.isMobile });
   const token = G.ionToken.trim();
   if (token) Cesium.Ion.defaultAccessToken = token;
 
@@ -37,9 +54,9 @@ export async function initViewer(): Promise<void> {
     selectionIndicator: false,
     creditContainer: document.getElementById("mapCredit") || document.createElement("div"),
     requestRenderMode: false,
-    targetFrameRate: G.isMobile ? 30 : 60,
+    targetFrameRate: bootFrameRate({ software: G.softwareGL, mobile: G.isMobile, quality: G.quality }),
     baseLayer: esriLayer(),
-    msaaSamples: G.isMobile ? 1 : 4,
+    msaaSamples: G.softwareGL || G.isMobile ? 1 : G.quality === "high" ? 8 : 4,
   };
 
   if (token) {
@@ -112,34 +129,42 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
   G.quality = q;
   if (!G.viewer || G.viewer.isDestroyed()) return;
   const scene = G.viewer.scene;
-  scene.globe.maximumScreenSpaceError = q === "high" ? 1.35 : q === "medium" ? 2.2 : 4.0;
-  scene.fog.density = q === "low" ? 0.00002 : q === "high" ? 0.000006 : 0.00001;
+  const soft = G.softwareGL;
+  const tier = soft && q === "high" ? "medium" : q;
+  scene.globe.maximumScreenSpaceError = tier === "high" ? 1.15 : tier === "medium" ? 2.2 : 4.2;
+  scene.fog.density = tier === "low" ? 0.00002 : tier === "high" ? 0.000005 : 0.00001;
   try {
-    scene.highDynamicRange = q === "high";
-    G.viewer.targetFrameRate = G.isMobile ? 30 : q === "low" ? 30 : 60;
+    scene.highDynamicRange = tier === "high" && !soft;
+    G.viewer.targetFrameRate = bootFrameRate({ software: soft, mobile: G.isMobile, quality: tier });
   } catch {
     /* */
   }
   try {
     const bloom = scene.postProcessStages.bloom;
-    bloom.enabled = q !== "low";
-    bloom.uniforms.contrast = q === "high" ? 96 : 52;
-    bloom.uniforms.brightness = q === "high" ? -0.12 : -0.22;
+    bloom.enabled = tier !== "low" && !soft;
+    bloom.uniforms.contrast = tier === "high" ? 108 : 52;
+    bloom.uniforms.brightness = tier === "high" ? -0.08 : -0.22;
     bloom.uniforms.delta = 0.9;
-    bloom.uniforms.sigma = q === "high" ? 3.2 : 2.2;
-    bloom.uniforms.stepSize = q === "high" ? 1.4 : 1.0;
+    bloom.uniforms.sigma = tier === "high" ? 3.4 : 2.2;
+    bloom.uniforms.stepSize = tier === "high" ? 1.5 : 1.0;
     scene.postProcessStages.fxaa.enabled = true;
   } catch {
     /* */
   }
   try {
-    scene.globe.enableLighting = q !== "low";
-    scene.globe.showWaterEffect = q !== "low";
+    scene.globe.enableLighting = tier !== "low";
+    scene.globe.showWaterEffect = tier !== "low" && !soft;
     scene.globe.showGroundAtmosphere = true;
+    scene.globe.tileCacheSize = tier === "high" ? 1800 : tier === "medium" ? 1100 : 500;
   } catch {
     /* */
   }
-  if (q === "low" && G.clouds) {
+  try {
+    scene.shadowMap.enabled = tier === "high" && !soft;
+  } catch {
+    /* */
+  }
+  if (tier === "low" && G.clouds) {
     try {
       scene.primitives.remove(G.clouds);
     } catch {
@@ -197,7 +222,7 @@ export function spawnClouds(lon: number, lat: number): void {
       }
     }
     const col = new Cesium.CloudCollection();
-    const n = G.quality === "high" ? 14 : G.quality === "medium" ? 7 : 0;
+    const n = G.quality === "high" && !G.softwareGL ? 18 : G.quality === "medium" ? 7 : 0;
     for (let i = 0; i < n; i++) {
       const dlon = (Math.random() - 0.5) * 1.6;
       const dlat = (Math.random() - 0.5) * 1.2;

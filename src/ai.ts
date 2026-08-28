@@ -40,7 +40,7 @@ export function updateEnemy(
     e.gunCd -= dt;
     if (e.gunCd <= 0 && Math.abs(ata) < 0.28 && d < gunRange && (!G.cloaked || d < 260)) {
       fire.gun(e);
-      e.gunCd = (e.kind === "ace" ? 0.09 : 0.13) / Math.max(0.6, G.aiMul);
+      e.gunCd = (e.kind === "ace" ? 0.16 : 0.28) / Math.max(0.6, G.aiMul);
     }
   } else if (e.ai === "break") {
     desired = e.heading + (ata >= 0 ? 1.4 : -1.4);

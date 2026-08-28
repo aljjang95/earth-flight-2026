@@ -230,10 +230,10 @@ function packGltf(pos: number[], nrm: number[], idx: number[], color: number[], 
         name: "skin",
         pbrMetallicRoughness: {
           baseColorFactor: [color[0], color[1], color[2], 1],
-          metallicFactor: 0.78,
-          roughnessFactor: 0.32,
+          metallicFactor: 0.82,
+          roughnessFactor: 0.22,
         },
-        emissiveFactor: [color[0] * 0.12, color[1] * 0.1, color[2] * 0.14],
+        emissiveFactor: [color[0] * 0.05, color[1] * 0.04, color[2] * 0.06],
         doubleSided: true,
       },
     ],
@@ -270,7 +270,7 @@ function hexRgb(cssColor: string): number[] {
   const r = parseInt(hex.slice(0, 2), 16) / 255;
   const g = parseInt(hex.slice(2, 4), 16) / 255;
   const b = parseInt(hex.slice(4, 6), 16) / 255;
-  return [r * 0.5 + 0.16, g * 0.5 + 0.16, b * 0.5 + 0.18];
+  return [r * 0.78 + 0.05, g * 0.78 + 0.05, b * 0.78 + 0.06];
 }
 
 /** Low-poly lofted fighter in glTF space (Y up, Z forward). */
@@ -295,7 +295,7 @@ export function jetModelUri(cssColor: string, variant: string = "sparrow"): stri
     { z: 4.6 * long, rx: 0.4 * fat, ry: 0.3 * fat, cy: 0.04 },
     { z: 6.4 * long, rx: 0.22, ry: 0.18, cy: 0.02 },
     { z: 7.7 * long, rx: 0.08, ry: 0.07 },
-  ]);
+  ], 16);
   addLoft(
     pos,
     nrm,

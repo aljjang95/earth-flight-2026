@@ -36,12 +36,14 @@ function addJet(
     }, false),
     model: {
       uri: jetModelUri(color, variant),
-      minimumPixelSize: 96,
-      maximumScale: 48000,
+      minimumPixelSize: 120,
+      maximumScale: 52000,
       scale,
-      color: Cesium.Color.fromCssColorString(color),
-      colorBlendMode: Cesium.ColorBlendMode.MIX,
-      colorBlendAmount: 0.42,
+      color: Cesium.Color.WHITE,
+      colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
+      colorBlendAmount: 0.06,
+      silhouetteColor: Cesium.Color.fromCssColorString(color).withAlpha(G.softwareGL ? 0 : 0.45),
+      silhouetteSize: G.softwareGL || G.quality === "low" ? 0 : 1.15,
     },
     point: {
       pixelSize: label ? 6 : 0,
@@ -76,7 +78,7 @@ function addJet(
 
 export function spawnPlayerCraft(): void {
   const craft = craftById(G.equipped);
-  const spawned = addJet(craft.color, () => G.player, 5.8, craft.id);
+  const spawned = addJet(craft.color, () => G.player, 4.6, craft.id);
   G.playerEntity = spawned.jet;
   G.playerExhaust = spawned.exhaust;
   G.playerTrail = [];
@@ -138,16 +140,16 @@ export function spawnWave(): void {
     const slot = i / Math.max(1, n - 1);
     const pattern = i % 3;
     let hdg = p.heading;
-    let meters = (280 + i * 50 + Math.random() * 40) * G.spawnMul;
+    let meters = (900 + i * 80 + Math.random() * 60) * G.spawnMul;
     if (pattern === 0) {
-      hdg = p.heading + (slot - 0.5) * 0.35;
-      meters = (300 + i * 45) * G.spawnMul;
+      hdg = p.heading + (slot - 0.5) * 0.28;
+      meters = (1080 + i * 70) * G.spawnMul;
     } else if (pattern === 1) {
-      hdg = p.heading + 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = (380 + i * 40) * G.spawnMul;
+      hdg = p.heading + 1.05 + (Math.random() - 0.5) * 0.18;
+      meters = (1180 + i * 55) * G.spawnMul;
     } else {
-      hdg = p.heading - 1.15 + (Math.random() - 0.5) * 0.2;
-      meters = (360 + i * 40) * G.spawnMul;
+      hdg = p.heading - 1.05 + (Math.random() - 0.5) * 0.18;
+      meters = (1120 + i * 55) * G.spawnMul;
     }
     const dist = meters / 111320;
     const kind = isBoss && i === 0 ? "leader" : isBoss || G.wave >= 8 ? "ace" : "bandit";
@@ -165,7 +167,7 @@ export function spawnWave(): void {
       maxHp: hp,
       kind,
       ai: "intercept",
-      gunCd: 0.4 + Math.random() * 0.5,
+      gunCd: 2.2 + Math.random() * 0.9,
       mslCd: 4 + Math.random() * 5,
       flareCd: 0,
       entity: null,
@@ -176,7 +178,7 @@ export function spawnWave(): void {
       spdMul: rank.spd * (kind === "ace" ? 1.12 : 1),
     };
     const color = kind === "leader" ? "#fbbf24" : kind === "ace" ? "#ef4444" : "#f87171";
-    const spawned = addJet(color, () => e, kind === "leader" ? 7.4 : 6.4, kind, e.callsign);
+    const spawned = addJet(color, () => e, kind === "leader" ? 5.6 : 4.8, kind, e.callsign);
     e.entity = spawned.jet;
     e.exhaust = spawned.exhaust;
     G.enemies.push(e);
@@ -315,7 +317,7 @@ export function fireMissile(free = false): void {
 }
 
 export function fireEnemyGun(e: Enemy): void {
-  spawnTracer(false, e.lon, e.lat, e.alt, e.heading, e.pitch, e.speed + 380, (7 + Math.random() * 6) * G.difficulty);
+  spawnTracer(false, e.lon, e.lat, e.alt, e.heading, e.pitch, e.speed + 380, (3.2 + Math.random() * 3.2) * G.difficulty);
 }
 
 export function fireEnemyMissile(e: Enemy): void {
@@ -526,6 +528,7 @@ export function killEnemy(e: Enemy): void {
 
 export function damagePlayer(amount: number): void {
   if (G.gameOver) return;
+  if (G.spawnProtect > 0) return;
   G.player.hp = Math.max(0, G.player.hp - amount * G.damageMul);
   G.damageTaken += amount * G.damageMul;
   const flash = document.getElementById("dmgFlash");
@@ -638,9 +641,9 @@ function updateTracers(dt: number): void {
     if (b.fromPlayer) {
       for (const e of G.enemies) {
         if (e.dead) continue;
-            if (distM(b.lon, b.lat, b.alt, e.lon, e.lat, e.alt) < 48) {
-              e.hp -= b.dmg * (Math.random() < 0.12 ? 2 : 1);
-              G.shotsHit += 1;
+        if (distM(b.lon, b.lat, b.alt, e.lon, e.lat, e.alt) < 42) {
+          e.hp -= b.dmg * (Math.random() < 0.12 ? 2 : 1);
+          G.shotsHit += 1;
           hitSpark(e.lon, e.lat, e.alt);
           try {
             if (b.prim && pts) pts.remove(b.prim);
@@ -657,7 +660,7 @@ function updateTracers(dt: number): void {
           break;
         }
       }
-    } else if (distM(b.lon, b.lat, b.alt, G.player.lon, G.player.lat, G.player.alt) < 38) {
+    } else if (distM(b.lon, b.lat, b.alt, G.player.lon, G.player.lat, G.player.alt) < 22) {
       damagePlayer(b.dmg);
       hitSpark(G.player.lon, G.player.lat, G.player.alt);
       try {
@@ -805,6 +808,7 @@ function updateFlares(dt: number): void {
 
 export function updateCombat(dt: number): void {
   G.aliveTime += dt;
+  G.spawnProtect = Math.max(0, G.spawnProtect - dt);
   G.fireCd = Math.max(0, G.fireCd - dt);
   G.missileCd = Math.max(0, G.missileCd - dt);
   G.flareCd = Math.max(0, G.flareCd - dt);

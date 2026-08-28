@@ -21,7 +21,9 @@ Seoul → Tokyo → Hong Kong → Singapore → Dubai → Cairo → Istanbul →
 - Playable **without** a Cesium ion token (Esri World Imagery).
 - Optional token upgrades photorealistic 3D cities + world terrain.
 - Auto quality via supervisor (FPS) with high/medium/low: bloom, water, clouds, MSAA.
+- Real GPUs boot **high**; SwiftShader/llvmpipe boot **low** at 30fps.
 - Solar-noon lighting per theater, atmosphere, contrails.
+- Wave-1 merge protection so the sortie starts as an intercept, not an ambush.
 
 ## Harness
 - Supervisor writes heartbeat (`window.__ACE_HEARTBEAT` + `harness/state/heartbeat.json`).

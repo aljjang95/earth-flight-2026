@@ -70,8 +70,8 @@ export function updateCamera(): void {
       pos,
       new Cesium.HeadingPitchRoll(p.heading, camPitch, camRoll),
     );
-    const dist = G.mode === "free" ? 82 : 44;
-    const height = G.mode === "free" ? 22 : 12;
+    const dist = G.mode === "free" ? 86 : 52;
+    const height = G.mode === "free" ? 24 : 14;
     const eye = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(-dist, 0, height), new Cesium.Cartesian3());
     const lookAt = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(20, 0, -5), new Cesium.Cartesian3());
     const dir = Cesium.Cartesian3.subtract(lookAt, eye, new Cesium.Cartesian3());

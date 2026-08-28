@@ -1,4 +1,4 @@
-# EARTH FLIGHT v2.1.0 — Ace Horizon World Combat
+# EARTH FLIGHT v2.1.1 — Ace Horizon World Combat
 
 Real-Earth CesiumJS fighter combat. Fly a world circuit and fight live enemy jets.
 

@@ -4,7 +4,7 @@ import { G } from "./state";
 import { audio } from "./audio";
 import { applyQuality, initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
 import { bindHud } from "./hud";
-import { bindGameKeys, exposeAceApi, returnToBase, startLoop, startMission } from "./game";
+import { bindGameKeys, exposeAceApi, hideStartOverlay, returnToBase, startLoop, startMission } from "./game";
 import { fireMissile, tryFlare, tryPotion, trySkill } from "./combat";
 import { writeSave } from "./save";
 
@@ -287,6 +287,14 @@ function wireUi(): void {
 }
 
 async function boot(): Promise<void> {
+  const qa = new URLSearchParams(location.search).has("qa") || new URLSearchParams(location.search).has("harness");
+  if (qa) {
+    hideStartOverlay();
+    G.difficulty = 0.75;
+    G.aiMul = 0.86;
+    G.theaterId = "seoul";
+    setMode("campaign");
+  }
   const savedToken = localStorage.getItem("cesium_ion_token");
   if (savedToken) G.ionToken = savedToken;
   $("loadingMsg").textContent = "지구 궤도 진입 중...";
@@ -299,18 +307,23 @@ async function boot(): Promise<void> {
   startLoop();
   $("harnessDock").classList.add("show");
 
-  const qa = new URLSearchParams(location.search).has("qa") || new URLSearchParams(location.search).has("harness");
   if (qa) {
+    hideStartOverlay();
     $("harnessDock").classList.add("show");
     setMode("campaign");
     G.theaterId = "seoul";
+    G.difficulty = 0.75;
+    G.aiMul = 0.86;
     await startMission();
+    hideStartOverlay();
   }
 
   exposeAceApi(async () => {
     G.mode = "campaign";
     G.theaterId = "seoul";
+    G.difficulty = 0.75;
     if (!G.flying) await startMission();
+    hideStartOverlay();
   });
 }
 

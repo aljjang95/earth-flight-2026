@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CAMPAIGN, THEATERS, theaterById } from "../src/config.ts";
+import { CAMPAIGN, RANKS, THEATERS, rankFor, theaterById } from "../src/config.ts";
 
 describe("world circuit", () => {
   it("has 16 campaign theaters starting in Seoul and ending in Sydney", () => {
@@ -23,5 +23,12 @@ describe("world circuit", () => {
       assert.ok(Math.abs(t.lat) < 80, t.id);
       assert.equal(theaterById(t.id).name, t.name);
     }
+  });
+
+  it("wave 1 is a two-ship intercept, not a merge in the player's face", () => {
+    const r = rankFor(1);
+    assert.equal(r.count, 2);
+    assert.ok(r.enemyHp <= 36);
+    assert.equal(RANKS[0].minWave, 1);
   });
 });

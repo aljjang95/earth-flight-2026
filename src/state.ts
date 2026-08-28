@@ -18,6 +18,8 @@ export const G = {
   tilesBackend: "imagery" as string,
   quality: "medium" as "high" | "medium" | "low",
   autoQuality: true,
+  softwareGL: false,
+  renderer: "",
   aiMul: 1,
   spawnMul: 1,
   lockCone: 0.36,
@@ -31,6 +33,9 @@ export const G = {
   shotsFired: 0,
   shotsHit: 0,
   improveT: 0,
+  spawnProtect: 0,
+  deathImproved: false,
+  missionLive: false,
   isMobile: false,
   ionToken: "",
   fps: 0,
@@ -130,4 +135,7 @@ export function resetCombatStats(): void {
   G.shotsFired = 0;
   G.shotsHit = 0;
   G.improveT = 0;
+  G.spawnProtect = 2.8;
+  G.deathImproved = false;
+  G.missionLive = true;
 }

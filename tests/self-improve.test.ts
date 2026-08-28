@@ -26,8 +26,8 @@ describe("self-improve patches", () => {
     assert.equal(proposePatches(base({ flying: false, fps: 10 })).length, 0);
   });
 
-  it("drops quality when fps is poor", () => {
-    const p = proposePatches(base({ fps: 18, quality: "medium" }));
+  it("drops quality when fps is under 30", () => {
+    const p = proposePatches(base({ fps: 28, quality: "medium" }));
     assert.equal(p[0]?.id, "quality-down");
     assert.equal(p[0]?.quality, "low");
   });
@@ -38,8 +38,8 @@ describe("self-improve patches", () => {
     assert.equal(p[0]?.quality, "high");
   });
 
-  it("eases AI after an early death", () => {
-    const p = proposePatches(base({ dead: true, aliveTime: 14, fps: 40 }));
+  it("eases AI after an early death including sub-6s losses", () => {
+    const p = proposePatches(base({ dead: true, aliveTime: 5, fps: 40 }));
     const ease = p.find((x) => x.id === "ease-ai");
     assert.ok(ease);
     assert.ok((ease?.aiMul ?? 1) < 1);

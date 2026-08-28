@@ -1,4 +1,4 @@
-# QA Dogfood — Ace Horizon World Combat 2.1.0
+# QA Dogfood — Ace Horizon World Combat 2.1.1
 
 ## Objective
 Convert EARTH FLIGHT into a **world-travel + live fighter-jet combat** web game with production-grade graphics and play, inside a Grok 4.7 product harness (supervisor heartbeats the orchestrator, self-improvement / release-patch loop). See `prd/world-combat.md`.
@@ -16,17 +16,28 @@ Convert EARTH FLIGHT into a **world-travel + live fighter-jet combat** web game 
 | P1 | Leftover Vite `src/counter.ts` |
 | P2 | Contrail entity spam; no world circuit; no missile warning / flares |
 
-## v2.1.0 patch loop
+## v2.1.0 dogfood (browser)
+
+| Sev | Finding |
+| --- | --- |
+| P0 | Shot down in ~5s with 0 kills (wave-1 3-ship spawned in gun range, lethal DPS) |
+| P0 | `?qa=1` could leave hangar overlay on top of combat |
+| P1 | Jets looked translucent (Cesium MIX blend) |
+| P1 | Software GL ~20–28fps; quality stayed medium; improve interval 8s never fired before death |
+| P2 | Ease-AI required aliveTime > 6s so a 5s death never patched |
+
+## v2.1.1 patch loop
 
 | Check | Result |
 | --- | --- |
 | 16-theater circuit Seoul → Sydney | code + `npm test` |
 | Enemy guns / missiles / flares | code |
 | Afterburner exhaust + wreckage | code |
-| Self-improve proposePatches | unit tests |
-| No double-fire M/G/F | orchestrator |
-| Centered chase cam | orchestrator |
-| `cancelFlight` theater chips | orchestrator |
+| Opaque PBR jets + silhouette | code |
+| Spawn protect + 1km intercept | code |
+| `?qa=1` hangar lock (`mission-live`) | code |
+| Software GL → low / 30fps | `gfx` unit tests |
+| Self-improve 3.2s + FPS floor 30 | unit tests |
 | Supervisor heartbeat dock | in-game always on |
 | Playable without ion token | Esri imagery |
 

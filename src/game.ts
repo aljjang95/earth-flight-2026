@@ -20,6 +20,7 @@ export function startLoop(): void {
     const dt = Math.min((now - G.lastTs) / 1000, 0.05);
     G.lastTs = now;
     tickHarness(dt);
+    syncMissionChrome();
     if (G.menuOrbit && !G.flying) {
       syncHangarTheater();
       updateMenuCamera(dt);
@@ -49,6 +50,22 @@ export function bindGameKeys(): void {
       if (pm) pm.style.display = G.paused ? "flex" : "none";
     }
   });
+}
+
+export function syncMissionChrome(): void {
+  const ov = document.getElementById("startOverlay");
+  if (!ov) return;
+  if (G.flying || G.missionLive) ov.classList.add("mission-live");
+  else ov.classList.remove("mission-live");
+}
+
+export function hideStartOverlay(): void {
+  G.missionLive = true;
+  const ov = document.getElementById("startOverlay");
+  if (ov) {
+    ov.style.display = "none";
+    ov.classList.add("mission-live");
+  }
 }
 
 export async function startMission(): Promise<void> {
@@ -82,6 +99,7 @@ export async function startMission(): Promise<void> {
   if (camBtn) camBtn.textContent = G.cam === "first" ? "3인칭" : "1인칭";
 
   document.getElementById("startOverlay")!.style.display = "none";
+  document.getElementById("startOverlay")!.classList.add("mission-live");
   document.getElementById("hud")!.style.display = "block";
   document.getElementById("hudCanvas")!.style.display = "block";
   document.getElementById("sideBtns")!.style.display = "flex";
@@ -131,6 +149,7 @@ export function returnToBase(): void {
   G.flying = false;
   G.gameOver = false;
   G.menuOrbit = true;
+  G.missionLive = false;
   clearCombatEntities();
   document.getElementById("pauseMenu")!.style.display = "none";
   document.getElementById("gameOver")!.style.display = "none";
@@ -143,6 +162,7 @@ export function returnToBase(): void {
   document.getElementById("thrPanel")!.style.display = "none";
   document.getElementById("sideBtns")!.style.display = "none";
   document.getElementById("cockpit")?.classList.remove("show");
+  document.getElementById("startOverlay")!.classList.remove("mission-live");
   document.getElementById("startOverlay")!.style.display = "flex";
   lookAtTheater(G.theaterId, 16_800_000, 2);
   writeSave(G.save);
@@ -160,6 +180,12 @@ export function exposeAceApi(startQa: () => Promise<void>): void {
       kills: G.kills,
       wave: G.wave,
       enemies: G.enemies.filter((e) => !e.dead).length,
+      spawnProtect: G.spawnProtect,
+      fps: G.fps,
+      quality: G.quality,
+      software: G.softwareGL,
+      patchGen: G.patchGen,
+      overlay: document.getElementById("startOverlay")?.classList.contains("mission-live") ?? false,
     }),
     startQa,
     skipPrologue: () => {

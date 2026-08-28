@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1] - 2026-08-28
+### Play quality (release-patch loop)
+- Spawn protection (2.8s MERGE SAFE), wave-1 two-ship intercept at ~1km, slower enemy guns.
+- `?qa=1` hides the hangar immediately (`mission-live`) and starts Seoul on trainee difficulty.
+- Software GL (SwiftShader/llvmpipe) boots low quality / 30fps; real GPUs boot high (MSAA 8, bloom, shadows).
+- Self-improve every 3.2s, FPS floor 30, ease-AI on early death (including sub-6s).
+- Opaque PBR jets (no ghost MIX), silhouette, tighter chase cam framing.
+
 ## [2.1.0] - 2026-08-28
 ### Added
 - **Grok 4.7 product harness** in-game: supervisor heartbeat, orchestrator ack, self-improve patches (quality / AI / lock cone / spawn range).

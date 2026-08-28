@@ -2,6 +2,7 @@ import { VERSION } from "./config";
 import { G } from "./state";
 import { theaterById } from "./config";
 import { applyQuality } from "./world";
+import { IMPROVE_INTERVAL, FPS_QUALITY_FLOOR } from "./gfx";
 import { proposePatches, type ImproveMetrics, type Patch } from "./selfImprove";
 
 function metrics(): ImproveMetrics {
@@ -40,11 +41,21 @@ export function tickHarness(dt: number): void {
     G.fps = G.frames / G.fpsT;
     G.frames = 0;
     G.fpsT = 0;
+    if (G.flying && G.autoQuality && G.fps > 2 && G.fps < FPS_QUALITY_FLOOR && G.quality !== "low") {
+      applyPatch({
+        id: "quality-down",
+        reason: `fps ${G.fps | 0} < ${FPS_QUALITY_FLOOR}`,
+        quality: G.quality === "high" ? "medium" : "low",
+      });
+    }
   }
 
   G.improveT += dt;
-  if (G.flying && G.improveT >= 8) {
+  const due = G.flying && G.improveT >= IMPROVE_INTERVAL;
+  const deathTick = G.flying && G.gameOver && !G.deathImproved;
+  if (due || deathTick) {
     G.improveT = 0;
+    if (G.gameOver) G.deathImproved = true;
     const planned = proposePatches(metrics());
     for (const p of planned) applyPatch(p);
   }
@@ -72,6 +83,8 @@ export function tickHarness(dt: number): void {
     patches: G.patches,
     quality: G.quality,
     aiMul: G.aiMul,
+    software: G.softwareGL,
+    spawnProtect: +G.spawnProtect.toFixed(1),
   };
   window.__ACE_HEARTBEAT = beat;
   const dock = document.getElementById("harnessDock");

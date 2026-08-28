@@ -1,6 +1,8 @@
 /** Pure Grok 4.7 self-improvement planner. No Cesium — unit-tested. */
 
-export type Quality = "high" | "medium" | "low";
+import { FPS_QUALITY_FLOOR, FPS_QUALITY_HEADROOM, type Quality } from "./gfx.ts";
+
+export type { Quality } from "./gfx";
 
 export interface ImproveMetrics {
   fps: number;
@@ -32,13 +34,13 @@ export function proposePatches(m: ImproveMetrics): Patch[] {
   const patches: Patch[] = [];
 
   if (m.autoQuality && m.fps > 2) {
-    if (m.fps < 26 && m.quality !== "low") {
+    if (m.fps < FPS_QUALITY_FLOOR && m.quality !== "low") {
       patches.push({
         id: "quality-down",
-        reason: `fps ${m.fps | 0} < 26`,
+        reason: `fps ${m.fps | 0} < ${FPS_QUALITY_FLOOR}`,
         quality: m.quality === "high" ? "medium" : "low",
       });
-    } else if (m.fps > 50 && m.quality !== "high") {
+    } else if (m.fps > FPS_QUALITY_HEADROOM && m.quality !== "high") {
       patches.push({
         id: "quality-up",
         reason: `fps ${m.fps | 0} headroom`,
@@ -47,7 +49,7 @@ export function proposePatches(m: ImproveMetrics): Patch[] {
     }
   }
 
-  if (m.dead && m.aliveTime > 6 && m.aliveTime < 28 && m.aiMul > 0.72) {
+  if (m.dead && m.aliveTime > 2.4 && m.aliveTime < 28 && m.aiMul > 0.72) {
     patches.push({
       id: "ease-ai",
       reason: "early death",

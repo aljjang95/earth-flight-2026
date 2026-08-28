@@ -41,6 +41,10 @@ html, body {
   pointer-events: none;
   background: linear-gradient(90deg, rgba(4,8,16,0.82) 0%, rgba(4,8,16,0.45) 42%, transparent 70%);
 }
+#startOverlay.mission-live {
+  display: none !important;
+  pointer-events: none;
+}
 
 .start-col {
   pointer-events: auto;
