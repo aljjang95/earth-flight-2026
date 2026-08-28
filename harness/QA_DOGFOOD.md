@@ -69,8 +69,12 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 
 | Check | Result |
 | --- | --- |
-| Theater fly generation + dropdown sync | pending browser |
-| Dumb-fire missile + longer trail | pending browser |
-| Longer / larger flares + toast | pending browser |
-| Default medium quality, 30fps cap | pending browser |
+| NYC dropdown globe fly | PASS |
+| Dumb-fire missile + MISSILE toast | PASS |
+| Flares + FLARE toast | PASS |
+| Gun tracer streaks | PASS |
+| Default medium quality, ~28fps | PASS |
+| Tokyo/NYC/Seoul **chips** snap globe | PASS (after cancelFlight / mid-click rebuild fix) |
+
+Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM.
 
