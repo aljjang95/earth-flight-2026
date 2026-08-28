@@ -1,0 +1,84 @@
+import { G } from "./state";
+import type { Enemy } from "./types";
+import { bearingTo, clockHour, distM, leadPoint, moveBody, wrapPi } from "./math";
+
+export function updateEnemy(
+  e: Enemy,
+  dt: number,
+  fire: { gun: (en: Enemy) => void; missile: (en: Enemy) => void },
+): void {
+  const p = G.player;
+  const d = distM(e.lon, e.lat, e.alt, p.lon, p.lat, p.alt);
+  const brg = bearingTo(e.lon, e.lat, p.lon, p.lat);
+  const ata = wrapPi(brg - e.heading);
+  const aspect = wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading);
+
+  const turn = (e.kind === "ace" ? 1.55 : e.kind === "leader" ? 1.32 : 1.18) * G.aiMul;
+  const gunRange = e.kind === "ace" ? 1500 : 1250;
+
+  if (e.hp < e.maxHp * 0.22 && d < 700) e.ai = "break";
+  else if (Math.abs(ata) < 0.22 && d < gunRange) e.ai = "guns";
+  else if (d < 260) e.ai = "break";
+  else if (d > 4200) e.ai = "rejoin";
+  else if (Math.abs(aspect) < 0.5 && d < 900 && Math.abs(ata) > 1.2) e.ai = "break";
+  else e.ai = "intercept";
+
+  let desired = brg;
+  let desiredPitch = 0;
+  const dAlt = p.alt - e.alt;
+
+  if (e.ai === "intercept") {
+    const leadT = Math.min(1.1, d / 3800);
+    const lp = leadPoint(p.lon, p.lat, p.heading, p.speed, leadT);
+    desired = bearingTo(e.lon, e.lat, lp.lon, lp.lat);
+    desiredPitch = Math.max(-0.45, Math.min(0.38, dAlt * 0.0007));
+    e.speed = (92 + Math.min(70, d * 0.004)) * e.spdMul;
+  } else if (e.ai === "guns") {
+    desired = brg;
+    desiredPitch = Math.max(-0.4, Math.min(0.32, Math.atan2(dAlt, Math.max(80, d))));
+    e.speed = (100 + p.speed * 0.25) * e.spdMul;
+    e.gunCd -= dt;
+    if (e.gunCd <= 0 && Math.abs(ata) < 0.28 && d < gunRange && (!G.cloaked || d < 260)) {
+      fire.gun(e);
+      e.gunCd = (e.kind === "ace" ? 0.16 : 0.28) / Math.max(0.6, G.aiMul);
+    }
+  } else if (e.ai === "break") {
+    desired = e.heading + (ata >= 0 ? 1.4 : -1.4);
+    desiredPitch = 0.22;
+    e.speed = 88 * e.spdMul;
+  } else if (e.ai === "rejoin") {
+    desired = brg;
+    desiredPitch = 0.12;
+    e.speed = 130 * e.spdMul;
+  }
+
+  const dh = wrapPi(desired - e.heading);
+  e.heading += Math.max(-turn, Math.min(turn, dh * 2.1)) * dt;
+  e.heading = Math.atan2(Math.sin(e.heading), Math.cos(e.heading));
+  e.roll = Math.max(-1.05, Math.min(1.05, dh * 1.05));
+  e.pitch += (desiredPitch - e.pitch) * Math.min(1, 3.2 * dt);
+  moveBody(e, dt);
+  if (e.alt < 90) e.alt = 90;
+  if (e.alt > 9000) e.alt = 9000;
+
+  e.mslCd -= dt;
+  if (
+    e.mslCd <= 0 &&
+    d > 520 &&
+    d < 2800 &&
+    Math.abs(ata) < 0.38 &&
+    (e.kind !== "bandit" || G.wave >= 2)
+  ) {
+    fire.missile(e);
+    e.mslCd = (e.kind === "leader" ? 7.5 : e.kind === "ace" ? 9 : 13) / Math.max(0.7, G.aiMul);
+  }
+
+  if (d < 14000) {
+    const hour = clockHour(wrapPi(bearingTo(p.lon, p.lat, e.lon, e.lat) - p.heading));
+    if (d < 1800 && G.radioT <= 0) {
+      G.radio =
+        `${e.callsign} ${hour}시` + (e.alt > p.alt + 80 ? " 하이" : e.alt < p.alt - 80 ? " 로우" : "");
+      G.radioT = 2.4;
+    }
+  }
+}

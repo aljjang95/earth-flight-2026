@@ -1,0 +1,348 @@
+import { ALL_LOCATIONS, theaterById } from "./config";
+import { G } from "./state";
+import { setMenuLook } from "./camera";
+import { bootFrameRate, bootQuality, isSoftwareRenderer } from "./gfx";
+
+let flyGen = 0;
+
+export function isMobile(): boolean {
+  return matchMedia("(max-width: 768px), (pointer: coarse)").matches;
+}
+
+function esriLayer(): any {
+  return new Cesium.ImageryLayer(
+    new Cesium.UrlTemplateImageryProvider({
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      maximumLevel: 16,
+      credit: "Esri, Maxar, Earthstar Geographics",
+    }),
+  );
+}
+
+export function probeWebglRenderer(): string {
+  if (typeof document === "undefined") return "";
+  try {
+    const c = document.createElement("canvas");
+    const gl = (c.getContext("webgl2") || c.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return "none";
+    const ext = gl.getExtension("WEBGL_debug_renderer_info") as { UNMASKED_RENDERER_WEBGL: number } | null;
+    if (ext) return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "");
+    return String(gl.getParameter(gl.RENDERER) || "");
+  } catch {
+    return "";
+  }
+}
+
+export async function initViewer(): Promise<void> {
+  G.isMobile = isMobile();
+  G.renderer = probeWebglRenderer();
+  G.softwareGL = isSoftwareRenderer(G.renderer);
+  G.quality = bootQuality({ software: G.softwareGL, mobile: G.isMobile });
+  const token = G.ionToken.trim();
+  if (token) Cesium.Ion.defaultAccessToken = token;
+
+  const opts: Record<string, unknown> = {
+    animation: false,
+    timeline: false,
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    fullscreenButton: false,
+    infoBox: false,
+    selectionIndicator: false,
+    creditContainer: document.getElementById("mapCredit") || document.createElement("div"),
+    requestRenderMode: false,
+    targetFrameRate: bootFrameRate({ software: G.softwareGL, mobile: G.isMobile, quality: G.quality }),
+    baseLayer: esriLayer(),
+    msaaSamples: G.softwareGL || G.isMobile ? 1 : G.quality === "high" ? 8 : 4,
+  };
+
+  if (token) {
+    try {
+      opts.terrain = Cesium.Terrain.fromWorldTerrain();
+    } catch {
+      /* ellipsoid */
+    }
+  }
+
+  G.viewer = new Cesium.Viewer("cesiumContainer", opts);
+  const scene = G.viewer.scene;
+  scene.screenSpaceCameraController.enableInputs = false;
+  scene.globe.enableLighting = true;
+  scene.globe.showGroundAtmosphere = true;
+  try {
+    scene.globe.showWaterEffect = true;
+  } catch {
+    /* water optional */
+  }
+  scene.fog.enabled = true;
+  scene.fog.density = 0.000008;
+  try {
+    scene.skyAtmosphere.brightnessShift = 0.22;
+    scene.skyAtmosphere.saturationShift = 0.14;
+    scene.skyAtmosphere.hueShift = -0.02;
+  } catch {
+    /* atmosphere uniforms */
+  }
+  scene.globe.maximumScreenSpaceError = G.isMobile ? 2.4 : 1.35;
+  scene.globe.tileCacheSize = G.isMobile ? 600 : 1400;
+  try {
+    scene.globe.preloadAncestors = false;
+    scene.globe.preloadSiblings = false;
+    scene.globe.loadingDescendantLimit = 1;
+  } catch {
+    /* */
+  }
+  try {
+    scene.highDynamicRange = false;
+  } catch {
+    /* hdr optional */
+  }
+  try {
+    const bloom = scene.postProcessStages.bloom;
+    bloom.enabled = false;
+    bloom.uniforms.contrast = 64;
+    bloom.uniforms.brightness = -0.2;
+    bloom.uniforms.delta = 0.8;
+    bloom.uniforms.sigma = 2.4;
+    bloom.uniforms.stepSize = 1.2;
+    scene.postProcessStages.fxaa.enabled = true;
+  } catch {
+    /* post optional */
+  }
+
+  G.tilesBackend = "esri";
+  applySolarNoon(127, 37.5);
+  G.viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(20, 18, 18_500_000),
+    orientation: { heading: 0.15, pitch: Cesium.Math.toRadians(-90), roll: 0 },
+  });
+
+  if (token) void tryPhotorealistic();
+  spawnClouds(theaterById("seoul").lon, theaterById("seoul").lat);
+  applyQuality(G.quality);
+}
+
+export function applyQuality(q: "high" | "medium" | "low"): void {
+  G.quality = q;
+  if (!G.viewer || G.viewer.isDestroyed()) return;
+  const scene = G.viewer.scene;
+  const soft = G.softwareGL;
+  const tier = soft && q === "high" ? "medium" : q;
+  scene.globe.maximumScreenSpaceError = tier === "high" ? 1.15 : tier === "medium" ? 2.2 : 4.2;
+  scene.fog.density = tier === "low" ? 0.00002 : tier === "high" ? 0.000005 : 0.00001;
+  try {
+    scene.highDynamicRange = tier === "high" && !soft;
+    G.viewer.targetFrameRate = bootFrameRate({ software: soft, mobile: G.isMobile, quality: tier });
+  } catch {
+    /* */
+  }
+  try {
+    const bloom = scene.postProcessStages.bloom;
+    bloom.enabled = tier !== "low" && !soft;
+    bloom.uniforms.contrast = tier === "high" ? 108 : 52;
+    bloom.uniforms.brightness = tier === "high" ? -0.08 : -0.22;
+    bloom.uniforms.delta = 0.9;
+    bloom.uniforms.sigma = tier === "high" ? 3.4 : 2.2;
+    bloom.uniforms.stepSize = tier === "high" ? 1.5 : 1.0;
+    scene.postProcessStages.fxaa.enabled = true;
+  } catch {
+    /* */
+  }
+  try {
+    scene.globe.enableLighting = tier !== "low";
+    scene.globe.showWaterEffect = tier !== "low" && !soft;
+    scene.globe.showGroundAtmosphere = true;
+    scene.globe.tileCacheSize = tier === "high" ? 1800 : tier === "medium" ? 1100 : 500;
+  } catch {
+    /* */
+  }
+  try {
+    scene.shadowMap.enabled = tier === "high" && !soft;
+  } catch {
+    /* */
+  }
+  if (tier === "low" && G.clouds) {
+    try {
+      scene.primitives.remove(G.clouds);
+    } catch {
+      /* */
+    }
+    G.clouds = null;
+  }
+}
+
+export function applySolarNoon(lon: number, _lat: number): void {
+  try {
+    const now = new Date();
+    const utcHour = (12 - lon / 15 + 24) % 24;
+    const solar = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        Math.floor(utcHour),
+        Math.floor((utcHour % 1) * 60),
+      ),
+    );
+    G.viewer.clock.currentTime = Cesium.JulianDate.fromDate(solar);
+    G.viewer.clock.shouldAnimate = false;
+    G.viewer.scene.globe.enableLighting = true;
+  } catch {
+    /* clock optional */
+  }
+}
+
+async function tryPhotorealistic(): Promise<void> {
+  try {
+    const tileset = await Promise.race([
+      Cesium.createGooglePhotorealistic3DTileset({ onlyUsingWithGoogleGeocoder: false }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("tiles timeout")), 14000)),
+    ]);
+    if (!G.viewer || G.viewer.isDestroyed()) return;
+    G.viewer.scene.primitives.add(tileset);
+    tileset.maximumScreenSpaceError = G.isMobile ? 10 : 6;
+    tileset.dynamicScreenSpaceError = true;
+    G.tilesBackend = "photorealistic";
+  } catch {
+    G.tilesBackend = "esri+terrain";
+  }
+}
+
+export function spawnClouds(lon: number, lat: number): void {
+  if (G.quality === "low" || !G.viewer) return;
+  try {
+    if (G.clouds) {
+      try {
+        G.viewer.scene.primitives.remove(G.clouds);
+      } catch {
+        /* */
+      }
+    }
+    const col = new Cesium.CloudCollection();
+    const n = G.quality === "high" && !G.softwareGL ? 18 : G.quality === "medium" ? 7 : 0;
+    for (let i = 0; i < n; i++) {
+      const dlon = (Math.random() - 0.5) * 1.6;
+      const dlat = (Math.random() - 0.5) * 1.2;
+      col.add({
+        position: Cesium.Cartesian3.fromDegrees(lon + dlon, lat + dlat, 1400 + Math.random() * 1600),
+        scale: new Cesium.Cartesian2(420 + Math.random() * 700, 140 + Math.random() * 180),
+        maximumSize: new Cesium.Cartesian3(55, 18, 16),
+        slice: 0.28 + Math.random() * 0.25,
+        brightness: 0.92 + Math.random() * 0.1,
+      });
+    }
+    G.viewer.scene.primitives.add(col);
+    G.clouds = col;
+  } catch {
+    G.clouds = null;
+  }
+}
+
+export function lookAtTheater(id: string, height = 420_000, duration = 2.4): void {
+  const t = theaterById(id);
+  applySolarNoon(t.lon, t.lat);
+  const gen = ++flyGen;
+  G.menuFly = true;
+  setMenuLook(t.lon, t.lat, height);
+  try {
+    G.viewer.camera.cancelFlight();
+  } catch {
+    /* */
+  }
+  const dest = Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height);
+  const overview = Cesium.Cartesian3.fromDegrees(t.lon, t.lat, Math.max(height * 8, 3_200_000));
+  const close = { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 };
+  try {
+    G.viewer.camera.setView({
+      destination: overview,
+      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-70), roll: 0 },
+    });
+  } catch {
+    /* */
+  }
+  try {
+    G.viewer.camera.flyTo({
+      destination: dest,
+      orientation: close,
+      duration,
+      easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
+      complete: () => {
+        if (gen === flyGen) G.menuFly = false;
+      },
+      cancel: () => {
+        if (gen === flyGen) G.menuFly = false;
+      },
+    });
+  } catch {
+    G.viewer.camera.setView({ destination: dest, orientation: close });
+    G.menuFly = false;
+  }
+  window.setTimeout(() => {
+    if (gen === flyGen && G.menuFly) G.menuFly = false;
+  }, Math.ceil(duration * 1000) + 400);
+}
+
+export function syncHangarTheater(): void {
+  if (G.flying || G.transiting) return;
+  const sel = document.getElementById("locationSelect") as HTMLSelectElement | null;
+  if (!sel?.value || sel.value === G.theaterId) return;
+  G.theaterId = sel.value;
+  const t = theaterById(sel.value);
+  const brief = document.getElementById("briefPreview");
+  if (brief) brief.textContent = t.briefing || `${t.name} · 자유 비행 가능`;
+  lookAtTheater(sel.value, 480_000, 2.3);
+}
+
+export function resizeViewer(): void {
+  if (!G.viewer || G.viewer.isDestroyed()) return;
+  try {
+    G.viewer.resize();
+  } catch {
+    /* */
+  }
+}
+
+export async function transitCinematic(fromId: string, toId: string): Promise<void> {
+  const from = theaterById(fromId);
+  const to = theaterById(toId);
+  G.transiting = true;
+  const ov = document.getElementById("transit");
+  const title = document.getElementById("transitTitle");
+  const sub = document.getElementById("transitSub");
+  if (ov) ov.classList.add("show");
+  if (title) title.textContent = to.name;
+  if (sub) sub.textContent = `${from.region}  →  ${to.region} · ${to.country}`;
+  applySolarNoon(to.lon, to.lat);
+  await fly(from.lon, from.lat, 3_800_000, 2.2);
+  await fly(to.lon, to.lat, 3_800_000, 3.6);
+  spawnClouds(to.lon, to.lat);
+  await fly(to.lon, to.lat, 14_000, 2.4);
+  if (ov) ov.classList.remove("show");
+  G.transiting = false;
+}
+
+function fly(lon: number, lat: number, alt: number, duration: number): Promise<void> {
+  return new Promise((resolve) => {
+    G.viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+      orientation: { heading: 0.2, pitch: Cesium.Math.toRadians(alt > 1e6 ? -88 : -28), roll: 0 },
+      duration,
+      complete: () => resolve(),
+      cancel: () => resolve(),
+    });
+  });
+}
+
+export function locationOptionsHtml(): string {
+  const camp = ALL_LOCATIONS.filter((t) => t.briefing);
+  const extra = ALL_LOCATIONS.filter((t) => !t.briefing);
+  let html = `<optgroup label="월드 서킷">`;
+  for (const t of camp) html += `<option value="${t.id}">${t.name}, ${t.country}</option>`;
+  html += `</optgroup><optgroup label="자유 전구">`;
+  for (const t of extra) html += `<option value="${t.id}">${t.name}, ${t.country}</option>`;
+  html += `</optgroup>`;
+  return html;
+}
