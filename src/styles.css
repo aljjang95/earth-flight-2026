@@ -366,6 +366,62 @@ html, body {
   80% { transform: translate(2px, 1px); }
 }
 
+.medal-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 0.75rem; min-height: 1.4em; }
+.medal-chip {
+  font-size: 0.62rem; font-family: ui-monospace, monospace;
+  border: 1px solid #334155; border-radius: 999px; padding: 3px 8px; color: #fde68a;
+  background: rgba(251,191,36,0.08);
+}
+.medal-chip.dim { color: #64748b; border-color: #1e293b; }
+
+#tutorial {
+  position: absolute; inset: 0; z-index: 95; display: none;
+  align-items: flex-end; justify-content: center;
+  padding: 0 16px 28px; pointer-events: none;
+  background: linear-gradient(to top, rgba(2,6,23,0.72), transparent 46%);
+}
+.tut-card {
+  pointer-events: auto; width: min(420px, 94vw);
+  background: rgba(8,14,26,0.92); border: 1px solid rgba(125,211,252,0.35);
+  border-radius: 16px; padding: 1rem 1.1rem 0.9rem;
+}
+.tut-kicker {
+  font-family: ui-monospace, monospace; font-size: 0.68rem;
+  letter-spacing: 0.28em; color: var(--cyan); margin-bottom: 0.4rem;
+}
+.tut-card p { font-size: 1rem; line-height: 1.45; margin-bottom: 0.75rem; }
+.tut-row { display: flex; gap: 8px; justify-content: flex-end; }
+.tut-row button, #creditsClose {
+  min-width: 88px; height: 40px; border-radius: 10px; border: 1px solid #334155;
+  background: #1e293b; color: #e2e8f0; cursor: pointer;
+}
+.tut-row button.primary { background: linear-gradient(135deg, #3b82f6, var(--rose)); border: none; font-weight: 600; }
+
+#creditsOverlay {
+  position: absolute; inset: 0; z-index: 96; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(2,6,23,0.82);
+}
+.credits-card {
+  text-align: center; max-width: 420px; padding: 1.4rem 1.6rem;
+  border: 1px solid rgba(125,211,252,0.3); border-radius: 16px; background: rgba(8,14,26,0.95);
+}
+.credits-card h2 { letter-spacing: 0.14em; margin-bottom: 0.6rem; }
+.credits-card p { opacity: 0.75; margin: 0.25rem 0; font-size: 0.9rem; }
+.credits-card button { margin-top: 1rem; min-width: 140px; height: 42px; }
+
+#photoFlash {
+  position: absolute; inset: 0; z-index: 97; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.18);
+  pointer-events: none;
+}
+#photoFlash.show { display: flex; }
+#photoLabel {
+  font-family: ui-monospace, monospace; letter-spacing: 0.18em;
+  color: #f8fafc; text-shadow: 0 2px 12px #000; font-size: 1.1rem;
+}
+
 @media (max-width: 480px) {
   .start-col { width: 100%; background: linear-gradient(180deg, rgba(4,8,16,0.88), rgba(4,8,16,0.55)); }
   .progress-row { grid-template-columns: repeat(3, 1fr); }

@@ -58,6 +58,9 @@ check("strike-grounds", all.includes("spawnGroundTargets") && all.includes("Grou
 check("defend-city", all.includes("spawnCityDefense") && all.includes("damageCity"), "defend city HP");
 check("escort-hunt", all.includes('"wingman"') && all.includes("killWingman"), "escort wingman hunters");
 check("medals", all.includes("medals") && html.includes("startMedals"), "theater medals");
+check("tutorial", html.includes("id=\"tutorial\"") && all.includes("maybeStartTutorial") && all.includes("tutorialDone"), "first-flight tutorial");
+check("pause-photo", html.includes("photoBtn") && all.includes("takePhoto"), "pause snapshot");
+check("credits", html.includes("creditsOverlay") && all.includes("showCredits"), "credits overlay");
 
 const pass = findings.every((f) => f.ok);
 const report = {

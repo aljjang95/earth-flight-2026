@@ -1,4 +1,4 @@
-# EARTH FLIGHT v4.0.0 — Ace Horizon World Combat
+# EARTH FLIGHT v5.0.0 — Ace Horizon World Combat
 
 Real-Earth world-travel fighter combat in the browser (CesiumJS).
 Supervisor + orchestrator harness keeps a release-patch / self-improvement loop alive.
@@ -16,6 +16,8 @@ Open http://localhost:5173
 - **전구 공중전**: 한 도시에서 웨이브 도그파이트 + GHOST-1 윙맨
 - **자유 비행**: 전 세계 도시 위를 비행
 - **그래픽**: 격납고에서 저/중/고 선택 (저장됨)
+- **튜토리얼**: 첫 출격 시 조작 안내 (`/?qa=1` 은 스킵)
+- **일시정지**: 스냅샷 · 크레딧
 
 Cesium ion 토큰은 **선택**입니다. 없어도 Esri 위성 지구로 바로 이륙합니다. 토큰이 있으면 지형 + Photorealistic 3D 도시가 켜집니다.
 

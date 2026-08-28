@@ -10,6 +10,7 @@ import { bindInput, input } from "./input";
 import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
+import { maybeStartTutorial, takePhoto } from "./tutorial";
 
 const bound = { bound: false };
 
@@ -128,6 +129,7 @@ export async function startMission(): Promise<void> {
       hint.style.opacity = "0";
     }, 6500);
   }
+  maybeStartTutorial();
 }
 
 export function returnToBase(): void {
@@ -187,6 +189,7 @@ export function exposeAceApi(startQa: () => Promise<void>): void {
     },
     missile: () => fireMissile(false),
     flare: () => tryFlare(),
+    photo: () => takePhoto(),
     getHp: () => G.player.hp,
     getKills: () => G.kills,
     theater: (id: string) => {

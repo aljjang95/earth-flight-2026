@@ -8,6 +8,7 @@ import { bindHud } from "./hud";
 import { bindGameKeys, exposeAceApi, returnToBase, startLoop, startMission } from "./game";
 import { fireMissile, tryFlare, tryPotion, trySkill } from "./combat";
 import { writeSave } from "./save";
+import { bindTutorial, showCredits, takePhoto } from "./tutorial";
 
 const $ = <T extends HTMLElement>(id: string) => {
   const key = id.startsWith("#") ? id.slice(1) : id;
@@ -23,8 +24,18 @@ function refreshStart(): void {
   const cleared = s.theatersCleared?.length || 0;
   const circ = $("#circuitProg");
   if (circ) circ.textContent = `${cleared}/${CAMPAIGN.length}`;
-  const medals = $("#startMedals");
-  if (medals) medals.textContent = String(s.medals?.length || 0);
+  const medalsEl = $("#startMedals");
+  if (medalsEl) medalsEl.textContent = String(s.medals?.length || 0);
+  const medalRow = $("#medalRow");
+  if (medalRow) {
+    const medals = s.medals || [];
+    medalRow.innerHTML = medals.length
+      ? medals
+          .slice(-8)
+          .map((m) => `<span class="medal-chip">${m.replace(":", " · ")}</span>`)
+          .join("")
+      : `<span class="medal-chip dim">아직 훈장 없음</span>`;
+  }
   renderCrafts();
   renderTheaters();
 }
@@ -261,6 +272,9 @@ function wireUi(): void {
     returnToBase();
     refreshStart();
   });
+  $("photoBtn")?.addEventListener("click", () => takePhoto());
+  $("creditsBtn")?.addEventListener("click", () => showCredits(true));
+  $("creditsClose")?.addEventListener("click", () => showCredits(false));
   $("retryBtn").addEventListener("click", () => {
     $("gameOver").style.display = "none";
     returnToBase();
@@ -297,6 +311,7 @@ function wireUi(): void {
 
   refreshStart();
   $("briefPreview").textContent = theaterBrief(theaterById("seoul"));
+  bindTutorial();
 }
 
 async function boot(): Promise<void> {

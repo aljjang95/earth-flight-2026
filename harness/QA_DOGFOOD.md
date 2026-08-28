@@ -78,7 +78,16 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 
 Remaining non-blockers: photorealistic 3D cities still need an optional Cesium ion token; WebGL software-render deprecation on this VM.
 
-## v4.0.0 world campaign
+## v5.0.0 production polish
+
+| Check | Result |
+| --- | --- |
+| Tutorial overlay (non-qa) | (dogfood) |
+| `/?qa=1` skips tutorial | (dogfood) |
+| Pause snapshot + credits | (dogfood) |
+| Hangar medal chips | (dogfood) |
+| Version 5.0.0 + `npm run qa` | (pending) |
+
 
 | Check | Result |
 | --- | --- |

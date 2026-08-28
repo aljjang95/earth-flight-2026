@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.0] - 2026-08-28
+### Added
+- First-flight **tutorial** overlay (skipped on `/?qa=1`, persisted via `tutorialDone`).
+- Pause **스냅샷** (photo flash + download when the canvas is not tainted) and **크레딧**.
+- Hangar **medal chips** from the campaign save.
+- Production polish pass on HUD/hangar copy for the 18-theater circuit.
+
 ## [4.0.0] - 2026-08-28
 ### Added
 - World Circuit expanded to **18 theaters** (Mumbai, Nairobi, Rome, Berlin, Moscow, Vancouver).
