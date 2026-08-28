@@ -26,6 +26,15 @@ function refreshStart(): void {
   renderTheaters();
 }
 
+function selectTheater(id: string): void {
+  G.theaterId = id;
+  ($("locationSelect") as HTMLSelectElement).value = id;
+  const t = theaterById(id);
+  $("briefPreview").textContent = t.briefing || `${t.name} · 자유 비행 가능`;
+  lookAtTheater(id, 480_000, 2.3);
+  renderTheaters();
+}
+
 function renderTheaters(): void {
   const row = $("theaterRow");
   if (!row) return;
@@ -35,13 +44,7 @@ function renderTheaters(): void {
     b.type = "button";
     b.className = "theater-chip" + (G.theaterId === t.id ? " active" : "");
     b.textContent = t.name;
-    b.onclick = () => {
-      G.theaterId = t.id;
-      ($("locationSelect") as HTMLSelectElement).value = t.id;
-      $("briefPreview").textContent = t.briefing;
-      lookAtTheater(t.id, 480_000, 2.3);
-      renderTheaters();
-    };
+    b.onclick = () => selectTheater(t.id);
     row.appendChild(b);
   }
 }
@@ -201,14 +204,9 @@ function wireUi(): void {
   });
   setMode("campaign");
 
-  $("locationSelect").addEventListener("change", () => {
-    const id = ($("locationSelect") as HTMLSelectElement).value;
-    G.theaterId = id;
-    lookAtTheater(id, 480_000, 2.3);
-    const t = theaterById(id);
-    $("briefPreview").textContent = t.briefing || `${t.name} · 자유 비행 가능`;
-    renderTheaters();
-  });
+  const onLoc = () => selectTheater(($("locationSelect") as HTMLSelectElement).value);
+  $("locationSelect").addEventListener("change", onLoc);
+  $("locationSelect").addEventListener("input", onLoc);
 
   $("buyPotion").addEventListener("click", () => {
     if (G.save.gold < 120) {
@@ -286,7 +284,6 @@ async function boot(): Promise<void> {
     setMode("campaign");
     G.theaterId = "seoul";
     await startMission();
-    await audio.start();
   }
 
   exposeAceApi(async () => {

@@ -2,6 +2,8 @@ import { ALL_LOCATIONS, theaterById } from "./config";
 import { G } from "./state";
 import { setMenuLook } from "./camera";
 
+let flyGen = 0;
+
 export function isMobile(): boolean {
   return matchMedia("(max-width: 768px), (pointer: coarse)").matches;
 }
@@ -10,7 +12,7 @@ function esriLayer(): any {
   return new Cesium.ImageryLayer(
     new Cesium.UrlTemplateImageryProvider({
       url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      maximumLevel: 19,
+      maximumLevel: 16,
       credit: "Esri, Maxar, Earthstar Geographics",
     }),
   );
@@ -18,7 +20,7 @@ function esriLayer(): any {
 
 export async function initViewer(): Promise<void> {
   G.isMobile = isMobile();
-  G.quality = G.isMobile ? "medium" : "high";
+  G.quality = "medium";
   const token = G.ionToken.trim();
   if (token) Cesium.Ion.defaultAccessToken = token;
 
@@ -35,9 +37,9 @@ export async function initViewer(): Promise<void> {
     selectionIndicator: false,
     creditContainer: document.getElementById("mapCredit") || document.createElement("div"),
     requestRenderMode: false,
-    targetFrameRate: G.isMobile ? 30 : 60,
+    targetFrameRate: 30,
     baseLayer: esriLayer(),
-    msaaSamples: G.quality === "high" ? 4 : 1,
+    msaaSamples: 1,
   };
 
   if (token) {
@@ -63,15 +65,22 @@ export async function initViewer(): Promise<void> {
   scene.skyAtmosphere.brightnessShift = 0.16;
   scene.skyAtmosphere.saturationShift = 0.1;
   scene.globe.maximumScreenSpaceError = G.isMobile ? 2.8 : 1.6;
-  scene.globe.tileCacheSize = G.isMobile ? 700 : 1800;
+  scene.globe.tileCacheSize = G.isMobile ? 500 : 900;
   try {
-    scene.highDynamicRange = G.quality === "high";
+    scene.globe.preloadAncestors = false;
+    scene.globe.preloadSiblings = false;
+    scene.globe.loadingDescendantLimit = 1;
+  } catch {
+    /* */
+  }
+  try {
+    scene.highDynamicRange = false;
   } catch {
     /* hdr optional */
   }
   try {
     const bloom = scene.postProcessStages.bloom;
-    bloom.enabled = G.quality === "high";
+    bloom.enabled = false;
     bloom.uniforms.contrast = 64;
     bloom.uniforms.brightness = -0.2;
     bloom.uniforms.delta = 0.8;
@@ -98,17 +107,23 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
   G.quality = q;
   if (!G.viewer || G.viewer.isDestroyed()) return;
   const scene = G.viewer.scene;
-  scene.globe.maximumScreenSpaceError = q === "high" ? 1.6 : q === "medium" ? 2.6 : 3.8;
+  scene.globe.maximumScreenSpaceError = q === "high" ? 2.0 : q === "medium" ? 2.8 : 4.2;
   scene.fog.density = q === "low" ? 0.00002 : 0.00001;
   try {
-    scene.highDynamicRange = q === "high";
+    scene.highDynamicRange = false;
   } catch {
     /* */
   }
   try {
     const bloom = scene.postProcessStages.bloom;
     bloom.enabled = q === "high";
-    scene.postProcessStages.fxaa.enabled = q !== "low";
+    scene.postProcessStages.fxaa.enabled = true;
+  } catch {
+    /* */
+  }
+  try {
+    scene.globe.enableLighting = q !== "low";
+    scene.globe.showWaterEffect = q === "high";
   } catch {
     /* */
   }
@@ -170,7 +185,7 @@ export function spawnClouds(lon: number, lat: number): void {
       }
     }
     const col = new Cesium.CloudCollection();
-    const n = G.quality === "high" ? 12 : G.isMobile ? 5 : 8;
+    const n = G.quality === "high" ? 8 : G.quality === "medium" ? 4 : 0;
     for (let i = 0; i < n; i++) {
       const dlon = (Math.random() - 0.5) * 1.6;
       const dlat = (Math.random() - 0.5) * 1.2;
@@ -192,28 +207,47 @@ export function spawnClouds(lon: number, lat: number): void {
 export function lookAtTheater(id: string, height = 420_000, duration = 2.4): void {
   const t = theaterById(id);
   applySolarNoon(t.lon, t.lat);
+  const gen = ++flyGen;
   G.menuFly = true;
   setMenuLook(t.lon, t.lat, height);
+  const dest = Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height);
+  const orientation = { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 };
+  try {
+    G.viewer.camera.cancelFlight();
+  } catch {
+    /* */
+  }
   try {
     G.viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
-      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
+      destination: dest,
+      orientation,
       duration,
       easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT,
       complete: () => {
-        G.menuFly = false;
+        if (gen === flyGen) G.menuFly = false;
       },
       cancel: () => {
-        G.menuFly = false;
+        if (gen === flyGen) G.menuFly = false;
       },
     });
   } catch {
-    G.viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(t.lon, t.lat, height),
-      orientation: { heading: t.heading, pitch: Cesium.Math.toRadians(-42), roll: 0 },
-    });
+    G.viewer.camera.setView({ destination: dest, orientation });
     G.menuFly = false;
   }
+  window.setTimeout(() => {
+    if (gen === flyGen && G.menuFly) G.menuFly = false;
+  }, Math.ceil(duration * 1000) + 400);
+}
+
+export function syncHangarTheater(): void {
+  if (G.flying || G.transiting) return;
+  const sel = document.getElementById("locationSelect") as HTMLSelectElement | null;
+  if (!sel?.value || sel.value === G.theaterId) return;
+  G.theaterId = sel.value;
+  const t = theaterById(sel.value);
+  const brief = document.getElementById("briefPreview");
+  if (brief) brief.textContent = t.briefing || `${t.name} · 자유 비행 가능`;
+  lookAtTheater(sel.value, 480_000, 2.3);
 }
 
 export function resizeViewer(): void {

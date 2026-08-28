@@ -21,7 +21,6 @@ function addJet(
   variant: string,
   label?: string,
 ): { jet: any; exhaust: any } {
-  const labeled = !!label && G.quality !== "low";
   const jet = G.viewer.entities.add({
     position: new Cesium.CallbackPositionProperty(() => {
       const p = getter();
@@ -37,56 +36,22 @@ function addJet(
     }, false),
     model: {
       uri: jetModelUri(color, variant),
-      minimumPixelSize: labeled ? 150 : 118,
-      maximumScale: 80000,
+      minimumPixelSize: 96,
+      maximumScale: 48000,
       scale,
       color: Cesium.Color.fromCssColorString(color),
       colorBlendMode: Cesium.ColorBlendMode.MIX,
-      colorBlendAmount: 0.48,
-      silhouetteColor: Cesium.Color.fromCssColorString(color).withAlpha(0.8),
-      silhouetteSize: labeled ? 2.0 : 1.35,
+      colorBlendAmount: 0.42,
     },
-    label: labeled
-      ? {
-          text: label,
-          font: "bold 13px monospace",
-          fillColor: Cesium.Color.fromCssColorString("#fecaca"),
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 4,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(0, -36),
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          showBackground: true,
-          backgroundColor: Cesium.Color.BLACK.withAlpha(0.45),
-        }
-      : undefined,
     point: {
-      pixelSize: labeled ? 6 : 0,
+      pixelSize: label ? 6 : 0,
       color: Cesium.Color.fromCssColorString(color),
       outlineColor: Cesium.Color.WHITE,
       outlineWidth: 1,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
   });
-  const exhaust = G.viewer.entities.add({
-    position: new Cesium.CallbackPositionProperty(() => {
-      const p = getter();
-      const m = 16 / 111320;
-      return Cesium.Cartesian3.fromDegrees(
-        p.lon - Math.sin(p.heading) * m,
-        p.lat - Math.cos(p.heading) * m,
-        p.alt - 0.6,
-      );
-    }, false),
-    point: {
-      pixelSize: labeled ? 12 : 14,
-      color: Cesium.Color.fromCssColorString("#fb923c"),
-      outlineColor: Cesium.Color.fromCssColorString("#fff7ed"),
-      outlineWidth: 1,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-    },
-  });
-  return { jet, exhaust };
+  return { jet, exhaust: null };
 }
 
 export function spawnPlayerCraft(): void {
@@ -301,12 +266,10 @@ export function fireGun(): void {
 export function fireMissile(free = false): void {
   if (!free && G.missileCd > 0) return;
   const hard = G.lockProg >= HARD_LOCK && G.locked && !G.locked.dead;
-  if (!free && !hard && G.lockProg < 0.34) {
-    audio.gun();
-    return;
-  }
-  if (!free) G.missileCd = hard ? 2.1 : 2.7;
+  const soft = !!(G.locked && !G.locked.dead);
+  if (!free) G.missileCd = hard ? 2.0 : 2.4;
   audio.missile();
+  toast(hard ? "LOCK MISSILE" : "MISSILE");
   const p = G.player;
   const m: Missile = {
     lon: p.lon,
@@ -314,12 +277,12 @@ export function fireMissile(free = false): void {
     alt: p.alt - 3,
     heading: p.heading,
     pitch: p.pitch,
-    speed: p.speed + 210,
+    speed: p.speed + (hard ? 180 : 140),
     t: 0,
     fromPlayer: true,
-    targetEnemy: hard ? G.locked : G.locked && !G.locked.dead ? G.locked : null,
+    targetEnemy: hard || soft ? G.locked : null,
     toPlayer: false,
-    dmg: hard ? 62 : 32,
+    dmg: hard ? 62 : 28,
     trail: [],
     entity: null,
     dead: false,
@@ -367,15 +330,15 @@ function missileEntity(m: Missile, color: string): any {
     }, false),
     model: {
       uri: missileModelUri(color),
-      minimumPixelSize: 28,
-      maximumScale: 12000,
-      scale: 2.4,
+      minimumPixelSize: 36,
+      maximumScale: 16000,
+      scale: 3.8,
     },
     point: {
-      pixelSize: 9,
+      pixelSize: 14,
       color: Cesium.Color.fromCssColorString(color),
       outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 1,
+      outlineWidth: 2,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
     polyline: {
@@ -383,7 +346,7 @@ function missileEntity(m: Missile, color: string): any {
         if (m.trail.length < 2) return [Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt), Cesium.Cartesian3.fromDegrees(m.lon, m.lat, m.alt)];
         return m.trail.map((t) => Cesium.Cartesian3.fromDegrees(t[0], t[1], t[2]));
       }, false),
-      width: 3.6,
+      width: 5.2,
       material: new Cesium.PolylineGlowMaterialProperty({
         glowPower: 0.28,
         color: Cesium.Color.fromCssColorString(color).withAlpha(0.9),
@@ -397,29 +360,30 @@ export function tryFlare(): void {
   G.player.flares -= 1;
   G.flareCd = 2.6;
   audio.flare();
+  toast("FLARE");
   const p = G.player;
   const back = p.heading + Math.PI;
   const pts = ensurePointCollection();
-  for (let i = 0; i < 10; i++) {
-    const spread = (Math.random() - 0.5) * 0.9;
-    const m = (28 + Math.random() * 36) / 111320;
+  for (let i = 0; i < 14; i++) {
+    const spread = (Math.random() - 0.5) * 1.1;
+    const m = (18 + Math.random() * 50) / 111320;
     const prim = pts.add({
-      position: Cesium.Cartesian3.fromDegrees(p.lon + Math.sin(back + spread) * m, p.lat + Math.cos(back + spread) * m, p.alt - 6),
-      pixelSize: 8 + Math.random() * 5,
+      position: Cesium.Cartesian3.fromDegrees(p.lon + Math.sin(back + spread) * m, p.lat + Math.cos(back + spread) * m, p.alt - 4),
+      pixelSize: 16 + Math.random() * 10,
       color: Cesium.Color.fromCssColorString(Math.random() < 0.5 ? "#fb923c" : "#fde68a"),
       outlineColor: Cesium.Color.WHITE,
-      outlineWidth: 1,
+      outlineWidth: 2,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     });
     flareSparks.push({
       lon: p.lon + Math.sin(back + spread) * m,
       lat: p.lat + Math.cos(back + spread) * m,
-      alt: p.alt - 6,
+      alt: p.alt - 4,
       heading: back + spread,
-      pitch: -0.55 - Math.random() * 0.25,
-      speed: 36 + Math.random() * 40,
+      pitch: -0.35 - Math.random() * 0.2,
+      speed: 18 + Math.random() * 22,
       t: 0,
-      life: 2.1 + Math.random() * 0.5,
+      life: 3.6 + Math.random() * 0.8,
       prim,
     });
   }
@@ -692,7 +656,7 @@ function updateMissiles(dt: number): void {
   for (let i = G.missiles.length - 1; i >= 0; i--) {
     const m = G.missiles[i];
     m.t += dt;
-    if (m.t > 5.2 || m.dead) {
+    if (m.t > 6.4 || m.dead) {
       removeMissile(m, i);
       continue;
     }
@@ -710,7 +674,7 @@ function updateMissiles(dt: number): void {
     }
     moveBody(m, dt);
     m.trail.push([m.lon, m.lat, m.alt]);
-    if (m.trail.length > 18) m.trail.shift();
+    if (m.trail.length > 36) m.trail.shift();
 
     if (m.fromPlayer) {
       for (const e of G.enemies) {
@@ -806,7 +770,7 @@ function updateFlares(dt: number): void {
     if (f.prim) {
       try {
         f.prim.position = Cesium.Cartesian3.fromDegrees(f.lon, f.lat, f.alt);
-        f.prim.pixelSize = 6 + (1 - f.t / f.life) * 8;
+        f.prim.pixelSize = 10 + (1 - f.t / f.life) * 14;
       } catch {
         /* */
       }

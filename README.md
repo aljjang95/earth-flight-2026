@@ -1,4 +1,4 @@
-# EARTH FLIGHT v2.0.1 — Ace Horizon World Combat
+# EARTH FLIGHT v2.0.2 — Ace Horizon World Combat
 
 Real-Earth world-travel fighter combat in the browser (CesiumJS).
 Supervisor + orchestrator harness keeps a release-patch / self-improvement loop alive.

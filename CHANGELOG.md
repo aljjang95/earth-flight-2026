@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2] - 2026-08-28
+### Fixed
+- Hangar theater fly no longer dies when a previous `flyTo` cancels (NYC/dropdown).
+- Missiles dumb-fire without a hard lock so `M` always launches a visible dart + trail.
+- Flares last longer and toast on deploy.
+- Default Cesium quality is medium (no bloom/HDR/MSAA) with 30fps cap for playable dogfights; steps up if the GPU can.
+
 ## [2.0.1] - 2026-08-28
 ### Added
 - Lofted fighter glTF (tapered fuselage, canopy, craft/bandit variants) plus missile dart mesh.

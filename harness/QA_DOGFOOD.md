@@ -57,10 +57,20 @@ Boot P0 (`$('#id')` / Ion terrain 401) patched in the release loop.
 
 | Check | Result |
 | --- | --- |
-| Lofted fuselage + craft variants | pending browser |
-| Dual-cannon tracer streaks + missile dart | pending browser |
-| Visible flares decoy missiles | pending browser |
-| Radar top-left, not covering FIRE | pending browser |
-| Adaptive quality steps down if FPS < 22 | pending browser |
-| Audio unlock on first gesture | pending browser |
+| Lofted fuselage + craft variants | PASS |
+| Dual-cannon tracer streaks | PASS |
+| Radar top-left, FIRE unobstructed | PASS |
+| Enemy return fire | PASS |
+| NYC dropdown camera fly | FAIL (stale flyTo cancel) |
+| Missile / flare visibility | FAIL (lock-gated missile; short flares) |
+| Combat FPS | 8–23 (high quality too heavy) |
+
+## v2.0.2 patch loop
+
+| Check | Result |
+| --- | --- |
+| Theater fly generation + dropdown sync | pending browser |
+| Dumb-fire missile + longer trail | pending browser |
+| Longer / larger flares + toast | pending browser |
+| Default medium quality, 30fps cap | pending browser |
 

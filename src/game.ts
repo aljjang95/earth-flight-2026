@@ -7,7 +7,7 @@ import { clearCombatEntities, spawnPlayerCraft, spawnWave, updateCombat, fireMis
 import { drawHud } from "./hud";
 import { tickHarness } from "./harness-client";
 import { bindInput, input } from "./input";
-import { applySolarNoon, lookAtTheater, spawnClouds } from "./world";
+import { applySolarNoon, lookAtTheater, spawnClouds, syncHangarTheater } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
 
@@ -21,6 +21,7 @@ export function startLoop(): void {
     G.lastTs = now;
     tickHarness(dt);
     if (G.menuOrbit && !G.flying) {
+      syncHangarTheater();
       updateMenuCamera(dt);
       return;
     }
@@ -41,6 +42,9 @@ export function bindGameKeys(): void {
     if (!G.flying) return;
     if (e.repeat) return;
     if (e.code === "KeyC") toggleCamera();
+    if (e.code === "KeyG") tryFlare();
+    if (e.code === "KeyM") fireMissile(false);
+    if (e.code === "KeyF") trySkill();
     if (e.code === "Escape" || e.code === "KeyP") {
       if (G.gameOver) return;
       G.paused = !G.paused;
