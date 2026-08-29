@@ -30,6 +30,7 @@ export function startLoop(): void {
     if (!G.paused && !G.gameOver && !G.transiting) {
       updateFlight(dt);
       if (G.mode !== "free") updateCombat(dt);
+      if (G.introLook > 0) G.introLook = Math.max(0, G.introLook - dt);
     }
     updateCamera();
     drawHud();
@@ -75,6 +76,7 @@ export async function startMission(): Promise<void> {
   G.player.speed = 155;
   G.player.throttle = 0.74;
   resetCombatStats();
+  G.introLook = 2.5;
   warmGlobe();
   applyTheaterMood(t.id);
   spawnClouds(t.lon, t.lat);
@@ -144,6 +146,7 @@ export function returnToBase(): void {
   G.flying = false;
   G.gameOver = false;
   G.menuOrbit = true;
+  G.introLook = 0;
   clearCombatEntities();
   document.getElementById("pauseMenu")!.style.display = "none";
   document.getElementById("gameOver")!.style.display = "none";

@@ -146,7 +146,7 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     /* */
   }
   try {
-    scene.highDynamicRange = q === "high";
+    scene.highDynamicRange = false;
   } catch {
     /* */
   }

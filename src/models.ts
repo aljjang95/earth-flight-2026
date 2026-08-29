@@ -230,10 +230,10 @@ function packGltf(pos: number[], nrm: number[], idx: number[], color: number[], 
         name: "skin",
         pbrMetallicRoughness: {
           baseColorFactor: [color[0], color[1], color[2], 1],
-          metallicFactor: 0.62,
-          roughnessFactor: 0.28,
+          metallicFactor: 0.7,
+          roughnessFactor: 0.36,
         },
-        emissiveFactor: [color[0] * 0.22, color[1] * 0.18, color[2] * 0.2],
+        emissiveFactor: [color[0] * 0.07, color[1] * 0.06, color[2] * 0.08],
         doubleSided: true,
       },
     ],
@@ -270,7 +270,7 @@ function hexRgb(cssColor: string): number[] {
   const r = parseInt(hex.slice(0, 2), 16) / 255;
   const g = parseInt(hex.slice(2, 4), 16) / 255;
   const b = parseInt(hex.slice(4, 6), 16) / 255;
-  return [r * 0.82 + 0.12, g * 0.82 + 0.12, b * 0.82 + 0.14];
+  return [r * 0.7 + 0.09, g * 0.7 + 0.09, b * 0.72 + 0.1];
 }
 
 /** Low-poly lofted fighter in glTF space (Y up, Z forward). */

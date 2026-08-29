@@ -6,6 +6,7 @@
 - Esri imagery loads to zoom 19 with ancestor/sibling preload and a larger tile cache; chase camera looks down so city tiles fill the frame.
 - Default hangar GFX is **고**. Medium is now sharper than the old “high” SSE.
 - Fighter meshes are brighter with a color silhouette and engine glow; spawn altitude raised so Seoul/Nairobi streets are in shot.
+- Takeoff uses a 2.5s look-down establishing shot so Esri city tiles load before chase cam; chase sits further back so the globe fills the frame.
 
 ## [5.1.0] - 2026-08-28
 ### Changed

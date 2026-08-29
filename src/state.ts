@@ -31,6 +31,7 @@ export const G = {
   points: null as any,
   lines: null as any,
   clouds: null as any,
+  introLook: 0,
   player: {
     lon: 126.978,
     lat: 37.5665,

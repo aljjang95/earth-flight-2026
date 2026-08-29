@@ -37,14 +37,14 @@ function addJet(
     }, false),
     model: {
       uri: jetModelUri(color, variant),
-      minimumPixelSize: 88,
-      maximumScale: 48000,
+      minimumPixelSize: 48,
+      maximumScale: 12000,
       scale,
       color: tint,
       colorBlendMode: Cesium.ColorBlendMode.MIX,
-      colorBlendAmount: 0.16,
-      silhouetteColor: tint.withAlpha(0.85),
-      silhouetteSize: 2.1,
+      colorBlendAmount: 0.2,
+      silhouetteColor: tint.withAlpha(0.5),
+      silhouetteSize: 1.05,
     },
     point: {
       pixelSize: label ? 10 : 0,
@@ -92,7 +92,7 @@ function addJet(
 
 export function spawnPlayerCraft(): void {
   const craft = craftById(G.equipped);
-  const spawned = addJet(craft.color, () => G.player, 5.8, craft.id);
+  const spawned = addJet(craft.color, () => G.player, 3.4, craft.id);
   G.playerEntity = spawned.jet;
   G.playerExhaust = spawned.exhaust;
   G.playerTrail = [];
@@ -158,7 +158,7 @@ function makeWingman(callsign: string, hdgOff: number, meters: number, dAlt: num
     spdMul: 1.04,
     friendly: true,
   };
-  const spawned = addJet(color, () => w, 7.4, "kestrel", callsign);
+  const spawned = addJet(color, () => w, 3.8, "kestrel", callsign);
   w.entity = spawned.jet;
   w.exhaust = spawned.exhaust;
   G.wingmen.push(w);
@@ -344,7 +344,7 @@ export function spawnWave(): void {
       hunt: th.mission === "escort" && i % 3 === 0 ? "wingman" : th.mission === "defend" && i % 2 === 0 ? "city" : "player",
     };
     const color = kind === "leader" ? "#fbbf24" : kind === "ace" ? "#ef4444" : "#f87171";
-    const spawned = addJet(color, () => e, kind === "leader" ? 7.4 : 6.4, kind, e.callsign);
+    const spawned = addJet(color, () => e, kind === "leader" ? 4.2 : 3.6, kind, e.callsign);
     e.entity = spawned.jet;
     e.exhaust = spawned.exhaust;
     G.enemies.push(e);
