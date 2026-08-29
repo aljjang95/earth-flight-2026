@@ -1,44 +1,42 @@
-# EARTH FLIGHT v1.3.4 — Ace Horizon
+# EARTH FLIGHT v5.2.0 — Ace Horizon World Combat
 
-Real-Earth CesiumJS flight combat. Continuous release train 2026.
+Real-Earth world-travel fighter combat in the browser (CesiumJS).
+Supervisor + orchestrator harness keeps a release-patch / self-improvement loop alive.
 
 ## Play
 
-Open `index.html` or `play.html` with a static server:
-
 ```bash
-npx serve .
-# or
-python3 -m http.server 8080
+npm install
+npm run dev
 ```
 
-Cesium Ion token required (free at https://ion.cesium.com/tokens). Paste on the start screen (saved to localStorage).
+Open http://localhost:5173
 
-## What’s new in 1.3.4
+- **월드 서킷**: 서울 → 도쿄 → 싱가포르 → 뭄바이 → 두바이 → 나이로비 → 카이로 → 로마 → 파리 → 런던 → 베를린 → 모스크바 → 뉴욕 → 시카고 → 밴쿠버 → 샌프란시스코 → 리우 → 시드니
+- **전구 공중전**: 한 도시에서 웨이브 도그파이트 + GHOST-1 윙맨
+- **자유 비행**: 전 세계 도시 위를 비행
+- **그래픽**: 격납고 기본값 **고**. 저/중/고 저장됨. FPS가 떨어져도 자동으로 저품질(조명 꺼짐)로 내리지 않음.
+- **튜토리얼**: 첫 출격 시 조작 안내 (`/?qa=1` 은 스킵)
+- **일시정지**: 스냅샷 · 크레딧
 
-- **Cinematic prologue**: orbit dive + bilingual narrative before flight
-- Daegu start location
-- Themed branding (favicon + title)
-- Progressive lock corner colors (cyan → gold)
-- Full game now properly in the public repo
+Cesium ion 토큰은 **선택**입니다. 없어도 Esri 위성 지구로 바로 이륙합니다. 토큰이 있으면 지형 + Photorealistic 3D 도시가 켜집니다.
 
-## Core features (from 1.3.3)
+## Combat
 
-- Progressive missile lock (≈22° nose-cone, LOCKING % → hard LOCK at 82%)
-- WAVE CLEAR breathing (1.15s) + ranked waves
-- 6 unique crafts with skills (afterburn, evade, plate, double missile, cloak, repair)
-- Guns + homing missiles, combos, boss waves
-- Gold / Diamonds / Pilot XP / Potions
-- Mobile virtual stick + full HUD
-- Solar noon lighting, first/third person camera
+- 적 전투기가 **실제 기관포 탄흔**과 **유도탄**을 발사합니다
+- `Space` 기관포 · `M` 유도탄 · `G` 플레어 · `F` 기체 스킬 · `C` 시점 · `P` 일시정지
+- 락온 콘 + LOCKING% → hard LOCK, RWR 경고
+- 전구별 날씨/시각, HIT 마커, 임무 목표 라인
 
-## Controls
+## Harness
 
-A/D · W/S · Space · M · F · 1 · P · C · virtual stick / mouse drag
+```bash
+npm run qa        # orchestrator static QA
+npm run harness   # supervisor heartbeats orchestrator
+```
 
-## Continuous Release Train
-
-1.3.4 ← 1.3.3 ← 1.3.2 ← …
+`/?qa=1` — skip hangar, start Seoul combat, show heartbeat dock.
+`/?qa=strike` — Nairobi ground-strike QA. `/?qa=defend` Rome. `/?qa=escort` Vancouver.
 
 ## License
 

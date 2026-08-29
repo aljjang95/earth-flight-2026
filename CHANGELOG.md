@@ -1,17 +1,79 @@
 # Changelog
 
+## [5.2.0] - 2026-08-29
+### Changed
+- Globe lighting and water stay on (no more unlit olive ellipsoid). Adaptive FPS never auto-drops to **저**.
+- Esri imagery loads to zoom 19 with ancestor/sibling preload and a larger tile cache; chase camera looks down so city tiles fill the frame.
+- Default hangar GFX is **고**. Medium is now sharper than the old “high” SSE.
+- Fighter meshes are brighter with a color silhouette and engine glow; spawn altitude raised so Seoul/Nairobi streets are in shot.
+- Takeoff uses a 2.5s look-down establishing shot so Esri city tiles load before chase cam; chase sits further back so the globe fills the frame.
+- World-circuit transit no longer gets cancelled by chase cam; Sydney clear ends the campaign; prologue dive is not overwritten by the hangar orbit.
+
+## [5.1.0] - 2026-08-28
+### Changed
+- Chase camera pulled back so the player jet, **GHOST-1 / GHOST-2**, and nearby bandits share the shot.
+- Wingmen hold formation for the first seconds instead of immediately leaving frame.
+- Ground strike sites spawn **ahead of the player** as tall orange towers with DESTROY labels.
+- Hangar theater chips show mission kind (요격/타격/엄호/방어).
+- Combat opens with a **sortie card** (theater + mission + weather).
+- `/?qa=strike` Nairobi, `/?qa=defend` Rome, `/?qa=escort` Vancouver.
+
+## [5.0.0] - 2026-08-28
+### Added
+- First-flight **tutorial** overlay (skipped on `/?qa=1`, persisted via `tutorialDone`).
+- Pause **스냅샷** (photo flash + download when the canvas is not tainted) and **크레딧**.
+- Hangar **medal chips** from the campaign save.
+- Production polish pass on HUD/hangar copy for the 18-theater circuit.
+
+## [4.0.0] - 2026-08-28
+### Added
+- World Circuit expanded to **18 theaters** (Mumbai, Nairobi, Rome, Berlin, Moscow, Vancouver).
+- Mission types honored in play: **strike** ground radar sites, **defend** city HP, **escort** GHOST-1 under fire.
+- Theater **medals** persist on save and show in the hangar.
+- Orange site boxes + city defend ring on the HUD.
+
+## [3.0.0] - 2026-08-28
+### Added
+- Friendly **GHOST-1 wingman** (cyan HUD box + radar) who hunts bandits with friendly gun tracers.
+- Theater **weather / time of day** mood (`clear` / `haze` / `storm` / `night`) via `applyTheaterMood`.
+- Hangar **그래픽** preset (low / medium / high) persisted on save.
+- Gun **HIT** marker and mission objective line on the canvas HUD.
+- Briefing line shows mission kind (요격·타격·엄호·방어) and weather.
+
+## [2.0.2] - 2026-08-28
+### Fixed
+- Hangar theater fly no longer dies when a previous `flyTo` cancels (NYC/dropdown).
+- Missiles dumb-fire without a hard lock so `M` always launches a visible dart + trail.
+- Flares last longer and toast on deploy.
+- Default Cesium quality is medium (no bloom/HDR/MSAA) with 30fps cap for playable dogfights; steps up if the GPU can.
+- Theater chips snap the globe onto the city immediately (no `cancelFlight` eating the next `flyTo`); chips use pointerdown delegation so the row is not rebuilt mid-click.
+
+## [2.0.1] - 2026-08-28
+### Added
+- Lofted fighter glTF (tapered fuselage, canopy, craft/bandit variants) plus missile dart mesh.
+- Dual-cannon tracer streaks, engine glow, player contrail, visible flare sparks that decoy missiles.
+- FPS-adaptive Cesium quality (`applyQuality`) so play stays smooth on weaker GPUs.
+- Audio unlock on first pointer/key gesture; lock HUD shows LOCKING%.
+
+### Fixed
+- Radar no longer covers FIRE / flare / skill; radar dots are pooled instead of rebuilt every frame.
+- Hangar theater chips fly the globe immediately; combat camera sits closer for a readable jet.
+
+## [2.0.0] - 2026-08-28
+### Added
+- **World Circuit campaign**: 12 real-Earth theaters with transit cinematics (Seoul → Sydney).
+- **Live fighter combat**: enemy jets fire visible tracers and homing missiles; player flares + RWR.
+- **Custom fighter glTF** (distinct player / bandit / ace / leader silhouettes).
+- Ace Combat-style **canvas HUD**, clouds, bloom/FXAA, explosion particles, missile glow trails.
+- **Token-optional** Esri satellite globe so the game starts without Cesium ion signup.
+- Grok 4.7 **product harness**: supervisor heartbeat + orchestrator self-improvement QA (`npm run qa`).
+- Modular Vite + TypeScript source (`src/`).
+
+### Fixed
+- Shop buttons no longer steal combat/free mode (`mode-play` vs `mode-btn`).
+- Default combat camera is a 3/4 chase view so the jet is visible; first-person optional.
+- Duplicate `play.html` monolith replaced with a redirect into the live game.
+
 ## [1.3.4] - 2026-08-24
 ### Added
-- **Cinematic prologue** (v1.3.4): bilingual timed sequence + camera dive from orbit to low altitude after "이륙하기". Skip button included.
-- **Daegu location** (사용자 위치 기반) in location select + LOCATIONS.
-- Progressive lock visual polish: cyan corners while locking → gold on hard LOCK (0.82).
-- Themed favicon (Earth + jet silhouette, blue-red gradient).
-- Honest continuous release train with real playable build now in repo.
-
-### Fixed / Improved
-- Replaced non-playable placeholder with the full v1.3.3 combat game (progressive lock, WAVE CLEAR 1.15s, 6 crafts, economy, mobile stick, boss, etc.).
-- Version strings synchronized to 1.3.4.
-- Leftover Vite template files noted for cleanup.
-
-### Notes
-Full combat systems from 1.3.3 remain intact. Prologue is a pure presentation layer that does not alter combat logic.
+- Cinematic prologue, Daegu location, progressive lock polish, themed favicon.
