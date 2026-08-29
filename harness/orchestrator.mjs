@@ -68,6 +68,10 @@ check("globe-lit", all.includes("scene.globe.enableLighting = true") && !all.inc
 check("no-auto-low", !all.includes('applyQuality("low")'), "fps adapter never applies low");
 check("city-tiles", all.includes("preloadAncestors = true") && all.includes("maximumLevel: 19"), "Esri city zoom + ancestor preload");
 check("city-intro", all.includes("introLook") && all.includes("alt + 520") && all.includes("setNearCameraVisuals"), "takeoff look-down loads city tiles");
+check("transit-cam", all.includes("if (!G.transiting) updateCamera()"), "chase cam does not cancel transit flyTo");
+check("campaign-end", all.includes("월드 서킷 완주") && all.includes("showEndScreen"), "sydney clear ends campaign");
+check("prologue-cam", all.includes("G.prologue = true") && all.includes("!G.prologue"), "menu cam skips prologue dive");
+check("pad-fire", all.includes("padFire"), "gamepad trigger release stops guns");
 
 const pass = findings.every((f) => f.ok);
 const report = {

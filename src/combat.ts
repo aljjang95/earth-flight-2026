@@ -7,7 +7,7 @@ import { burstExplosion, ensurePointCollection, ensurePolylineCollection, hitSpa
 import { addXp, writeSave } from "./save";
 import { updateEnemy, updateWingman } from "./ai";
 import { jetModelUri, missileModelUri } from "./models";
-import { transitCinematic, spawnClouds, applyTheaterMood } from "./world";
+import { transitCinematic, spawnClouds, applyTheaterMood, setNearCameraVisuals } from "./world";
 import { input, keys } from "./input";
 
 let eid = 1;
@@ -723,6 +723,21 @@ export function killEnemy(e: Enemy): void {
   }
 }
 
+export function showEndScreen(title: string, stats: string): void {
+  G.gameOver = true;
+  G.waveHold = 0;
+  const go = document.getElementById("gameOver");
+  const h2 = go?.querySelector("h2");
+  const gk = document.getElementById("goKills");
+  const gt = document.getElementById("goTime");
+  const gs = document.getElementById("goStats");
+  if (h2) h2.textContent = title;
+  if (gk) gk.textContent = String(G.kills);
+  if (gt) gt.textContent = String(Math.round(G.aliveTime));
+  if (gs) gs.textContent = stats;
+  if (go) go.style.display = "flex";
+}
+
 export function damagePlayer(amount: number): void {
   if (G.gameOver) return;
   G.player.hp = Math.max(0, G.player.hp - amount * G.damageMul);
@@ -735,20 +750,15 @@ export function damagePlayer(amount: number): void {
   }
   audio.hit();
   if (G.player.hp <= 0) {
-    G.gameOver = true;
     burstExplosion(G.player.lon, G.player.lat, G.player.alt, 1.8);
     if (G.kills > (G.save.bestKills || 0)) {
       G.save.bestKills = G.kills;
       writeSave(G.save);
     }
-    const go = document.getElementById("gameOver");
-    const gk = document.getElementById("goKills");
-    const gt = document.getElementById("goTime");
-    const gs = document.getElementById("goStats");
-    if (gk) gk.textContent = String(G.kills);
-    if (gt) gt.textContent = String(Math.round(G.aliveTime));
-    if (gs) gs.textContent = `GOLD ${G.save.gold} · DIA ${G.save.diamonds} · Lv.${G.save.level} · ${theaterById(G.theaterId).name}`;
-    if (go) go.style.display = "flex";
+    showEndScreen(
+      "격추당했습니다",
+      `GOLD ${G.save.gold} · DIA ${G.save.diamonds} · Lv.${G.save.level} · ${theaterById(G.theaterId).name}`,
+    );
   }
 }
 
@@ -788,15 +798,7 @@ export function damageCity(amount: number): void {
   audio.boom();
   burstExplosion(city.lon, city.lat, 80, 2);
   toast("수도 함락");
-  G.gameOver = true;
-  const go = document.getElementById("gameOver");
-  const gk = document.getElementById("goKills");
-  const gt = document.getElementById("goTime");
-  const gs = document.getElementById("goStats");
-  if (gk) gk.textContent = String(G.kills);
-  if (gt) gt.textContent = String(Math.round(G.aliveTime));
-  if (gs) gs.textContent = `${theaterById(G.theaterId).name} 방어 실패 · GOLD ${G.save.gold}`;
-  if (go) go.style.display = "flex";
+  showEndScreen("수도 함락", `${theaterById(G.theaterId).name} 방어 실패 · GOLD ${G.save.gold}`);
 }
 
 export function killGround(g: GroundTarget): void {
@@ -1119,9 +1121,14 @@ async function onTheaterClear(): Promise<void> {
     return;
   }
   const idx = CAMPAIGN.indexOf(id);
-  if (idx < 0 || idx >= CAMPAIGN.length - 1) {
+  if (idx < 0) {
+    G.waveHold = 1.4;
+    theaterClearing = false;
+    return;
+  }
+  if (idx >= CAMPAIGN.length - 1) {
     showBanner("WORLD CIRCUIT", "지구 제공권 확보", "CAMPAIGN CLEAR");
-    G.waveHold = 2.2;
+    showEndScreen("월드 서킷 완주", `${th.name} · ${G.kills} KILLS · GOLD ${G.save.gold}`);
     theaterClearing = false;
     return;
   }
@@ -1134,12 +1141,14 @@ async function onTheaterClear(): Promise<void> {
   const t = theaterById(next);
   G.player.lon = t.lon;
   G.player.lat = t.lat;
-  G.player.alt = 920;
+  G.player.alt = 1280;
   G.player.heading = t.heading;
   G.player.pitch = -0.04;
   G.player.roll = 0;
   applyTheaterMood(next);
   spawnClouds(t.lon, t.lat);
+  setNearCameraVisuals(true);
+  G.introLook = 3.2;
   if (G.wingmen.every((w) => w.dead)) spawnWingman();
   G.paused = false;
   showBanner("TRANSIT", t.name, t.briefing);
@@ -1194,7 +1203,7 @@ export function updateCombat(dt: number): void {
     }
   }
 
-  if ((input.firing || keys.has("Space")) && G.fireCd <= 0) {
+  if ((input.firing || input.padFire || keys.has("Space")) && G.fireCd <= 0) {
     fireGun();
     G.fireCd = 0.085;
   }

@@ -9,6 +9,7 @@ export const input = {
   mouseHeld: false,
   touchThrottle: 0,
   firing: false,
+  padFire: false,
   skillHeld: false,
   potionHeld: false,
   flareHeld: false,
@@ -57,6 +58,7 @@ export function bindInput(once: { bound: boolean }): void {
   window.addEventListener("blur", () => {
     keys.clear();
     input.firing = false;
+    input.padFire = false;
   });
 
   const stickEl = document.getElementById("stick")!;
@@ -186,6 +188,7 @@ export function readStick(): { rollCmd: number; pitchCmd: number } {
 
   try {
     const pads = navigator.getGamepads?.() ?? [];
+    input.padFire = false;
     for (const pad of pads) {
       if (!pad) continue;
       const lx = pad.axes[0] ?? 0;
@@ -199,7 +202,7 @@ export function readStick(): { rollCmd: number; pitchCmd: number } {
       const rt = pad.buttons[7]?.value ?? 0;
       const lt = pad.buttons[6]?.value ?? 0;
       G.player.throttle = Math.max(0, Math.min(1, G.player.throttle + (rt - lt) * 0.7 * 0.016));
-      if (pad.buttons[0]?.pressed) input.firing = true;
+      input.padFire = !!pad.buttons[0]?.pressed;
       break;
     }
   } catch {

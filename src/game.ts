@@ -21,7 +21,7 @@ export function startLoop(): void {
     const dt = Math.min((now - G.lastTs) / 1000, 0.05);
     G.lastTs = now;
     tickHarness(dt);
-    if (G.menuOrbit && !G.flying) {
+    if (G.menuOrbit && !G.flying && !G.prologue) {
       syncHangarTheater();
       updateMenuCamera(dt);
       return;
@@ -32,7 +32,7 @@ export function startLoop(): void {
       if (G.mode !== "free") updateCombat(dt);
       if (G.introLook > 0 && G.fps >= 5) G.introLook = Math.max(0, G.introLook - dt);
     }
-    updateCamera();
+    if (!G.transiting) updateCamera();
     drawHud();
     audio.update(G.player.speed, G.player.throttle);
   };
@@ -150,6 +150,8 @@ export function returnToBase(): void {
   G.menuOrbit = true;
   G.introLook = 0;
   setNearCameraVisuals(false);
+  const goTitle = document.querySelector("#gameOver h2");
+  if (goTitle) goTitle.textContent = "격추당했습니다";
   clearCombatEntities();
   document.getElementById("pauseMenu")!.style.display = "none";
   document.getElementById("gameOver")!.style.display = "none";

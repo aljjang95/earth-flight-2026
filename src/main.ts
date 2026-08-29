@@ -133,10 +133,12 @@ async function runPrologue(): Promise<void> {
   }
   overlay.classList.remove("hidden");
   skip.style.display = "block";
+  G.prologue = true;
   let done = false;
   const finish = async () => {
     if (done) return;
     done = true;
+    G.prologue = false;
     overlay.classList.add("hidden");
     skip.style.display = "none";
     await startMission();
