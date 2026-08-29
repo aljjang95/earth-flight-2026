@@ -7,7 +7,7 @@ import { clearCombatEntities, spawnPlayerCraft, spawnWave, spawnWingman, updateC
 import { drawHud } from "./hud";
 import { tickHarness } from "./harness-client";
 import { bindInput, input } from "./input";
-import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater } from "./world";
+import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater, warmGlobe } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
 import { maybeStartTutorial, takePhoto } from "./tutorial";
@@ -68,13 +68,14 @@ export async function startMission(): Promise<void> {
   G.player.flares = 6;
   G.player.lon = t.lon;
   G.player.lat = t.lat;
-  G.player.alt = G.mode === "free" ? 1100 : 880;
+  G.player.alt = G.mode === "free" ? 1480 : 1280;
   G.player.heading = t.heading;
   G.player.pitch = G.mode === "free" ? -0.12 : -0.04;
   G.player.roll = 0;
   G.player.speed = 155;
   G.player.throttle = 0.74;
   resetCombatStats();
+  warmGlobe();
   applyTheaterMood(t.id);
   spawnClouds(t.lon, t.lat);
   spawnPlayerCraft();

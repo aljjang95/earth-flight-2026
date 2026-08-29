@@ -1,4 +1,4 @@
-# EARTH FLIGHT v5.1.0 — Ace Horizon World Combat
+# EARTH FLIGHT v5.2.0 — Ace Horizon World Combat
 
 Real-Earth world-travel fighter combat in the browser (CesiumJS).
 Supervisor + orchestrator harness keeps a release-patch / self-improvement loop alive.
@@ -15,7 +15,7 @@ Open http://localhost:5173
 - **월드 서킷**: 서울 → 도쿄 → 싱가포르 → 뭄바이 → 두바이 → 나이로비 → 카이로 → 로마 → 파리 → 런던 → 베를린 → 모스크바 → 뉴욕 → 시카고 → 밴쿠버 → 샌프란시스코 → 리우 → 시드니
 - **전구 공중전**: 한 도시에서 웨이브 도그파이트 + GHOST-1 윙맨
 - **자유 비행**: 전 세계 도시 위를 비행
-- **그래픽**: 격납고에서 저/중/고 선택 (저장됨)
+- **그래픽**: 격납고 기본값 **고**. 저/중/고 저장됨. FPS가 떨어져도 자동으로 저품질(조명 꺼짐)로 내리지 않음.
 - **튜토리얼**: 첫 출격 시 조작 안내 (`/?qa=1` 은 스킵)
 - **일시정지**: 스냅샷 · 크레딧
 

@@ -16,7 +16,7 @@ function empty(): SaveData {
     owned: ["sparrow"],
     equipped: "sparrow",
     theatersCleared: [],
-    quality: "medium",
+    quality: "high",
     tutorialDone: false,
     medals: [],
   };
@@ -50,7 +50,7 @@ export function loadSave(): SaveData {
       owned,
       equipped: owned.includes(String(raw.equipped)) ? String(raw.equipped) : "sparrow",
       theatersCleared: Array.isArray(raw.theatersCleared) ? (raw.theatersCleared as string[]) : [],
-      quality: raw.quality === "high" || raw.quality === "low" || raw.quality === "medium" ? raw.quality : "medium",
+      quality: raw.quality === "high" || raw.quality === "low" || raw.quality === "medium" ? raw.quality : "high",
       tutorialDone: !!raw.tutorialDone,
       medals: Array.isArray(raw.medals) ? (raw.medals as string[]) : [],
     };

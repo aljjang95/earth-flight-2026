@@ -20,21 +20,20 @@ export function tickHarness(dt: number): void {
       lowHits = 0;
       highHits = 0;
     }
-    if (qualityGrace > 5 && G.fps > 2) {
-      if (G.fps < 22) {
+    // Never auto-apply low: that turns the globe into unlit olive clay.
+    // High may step to medium if the GPU is struggling; hangar choice is the floor.
+    if (qualityGrace > 8 && G.fps > 2) {
+      if (G.fps < 20) {
         lowHits += 1;
         highHits = 0;
-      } else if (G.fps > 40) {
+      } else if (G.fps > 48) {
         highHits += 1;
         lowHits = 0;
       } else {
         lowHits = 0;
         highHits = 0;
       }
-      if (lowHits >= 4 && G.quality === "high") applyQuality("medium");
-      else if (lowHits >= 4 && G.quality === "medium") applyQuality("low");
-      else if (highHits >= 6 && G.quality === "medium") applyQuality("high");
-      else if (highHits >= 6 && G.quality === "low") applyQuality("medium");
+      if (lowHits >= 6 && G.quality === "high" && G.save.quality === "high") applyQuality("medium");
     }
   }
   const beat = {
@@ -53,13 +52,14 @@ export function tickHarness(dt: number): void {
     hp: Math.round(G.player.hp),
     kills: G.kills,
     backend: G.tilesBackend,
+    quality: G.quality,
     supervisor: "alive",
     orchestrator: "self-improve",
   };
   window.__ACE_HEARTBEAT = beat;
   const dock = document.getElementById("harnessDock");
   if (dock && dock.classList.contains("show")) {
-    dock.textContent = `HB ${beat.fps}fps · ${beat.theaterName} W${beat.wave} · E${beat.enemies} · HP${beat.hp}`;
+    dock.textContent = `HB ${beat.fps}fps · ${beat.theaterName} W${beat.wave} · E${beat.enemies} · HP${beat.hp} · ${String(beat.quality).toUpperCase()}`;
   }
 }
 

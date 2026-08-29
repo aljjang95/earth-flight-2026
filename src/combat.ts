@@ -21,6 +21,7 @@ function addJet(
   variant: string,
   label?: string,
 ): { jet: any; exhaust: any } {
+  const tint = Cesium.Color.fromCssColorString(color);
   const jet = G.viewer.entities.add({
     position: new Cesium.CallbackPositionProperty(() => {
       const p = getter();
@@ -36,16 +37,18 @@ function addJet(
     }, false),
     model: {
       uri: jetModelUri(color, variant),
-      minimumPixelSize: 96,
+      minimumPixelSize: 88,
       maximumScale: 48000,
       scale,
-      color: Cesium.Color.fromCssColorString(color),
+      color: tint,
       colorBlendMode: Cesium.ColorBlendMode.MIX,
-      colorBlendAmount: 0.42,
+      colorBlendAmount: 0.16,
+      silhouetteColor: tint.withAlpha(0.85),
+      silhouetteSize: 2.1,
     },
     point: {
       pixelSize: label ? 10 : 0,
-      color: Cesium.Color.fromCssColorString(color),
+      color: tint,
       outlineColor: Cesium.Color.WHITE,
       outlineWidth: 2,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -54,7 +57,7 @@ function addJet(
       ? {
           text: label,
           font: "bold 15px sans-serif",
-          fillColor: Cesium.Color.fromCssColorString(color),
+          fillColor: tint,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 4,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
@@ -63,7 +66,28 @@ function addJet(
         }
       : undefined,
   });
-  return { jet, exhaust: null };
+  const exhaust = G.viewer.entities.add({
+    position: new Cesium.CallbackPositionProperty(() => {
+      const p = getter();
+      const c = Cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.alt);
+      const q = Cesium.Transforms.headingPitchRollQuaternion(
+        c,
+        new Cesium.HeadingPitchRoll(p.heading, p.pitch, p.roll),
+      );
+      const rot = Cesium.Matrix3.fromQuaternion(q);
+      const back = Cesium.Matrix3.multiplyByVector(rot, new Cesium.Cartesian3(-11, 0, -0.6), new Cesium.Cartesian3());
+      return Cesium.Cartesian3.add(c, back, new Cesium.Cartesian3());
+    }, false),
+    point: {
+      pixelSize: 12,
+      color: Cesium.Color.fromCssColorString("#ffb347"),
+      outlineColor: Cesium.Color.fromCssColorString("#fff7ed"),
+      outlineWidth: 1,
+      scaleByDistance: new Cesium.NearFarScalar(60, 18, 14000, 3),
+      disableDepthTestDistance: 80,
+    },
+  });
+  return { jet, exhaust };
 }
 
 export function spawnPlayerCraft(): void {
@@ -136,6 +160,7 @@ function makeWingman(callsign: string, hdgOff: number, meters: number, dAlt: num
   };
   const spawned = addJet(color, () => w, 7.4, "kestrel", callsign);
   w.entity = spawned.jet;
+  w.exhaust = spawned.exhaust;
   G.wingmen.push(w);
   return w;
 }

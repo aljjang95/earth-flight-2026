@@ -16,7 +16,7 @@ export const G = {
   theaterId: "seoul",
   campaignIndex: 0,
   tilesBackend: "imagery" as string,
-  quality: "medium" as Quality,
+  quality: "high" as Quality,
   isMobile: false,
   ionToken: "",
   fps: 0,

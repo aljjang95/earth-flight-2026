@@ -208,7 +208,7 @@ async function onTakeoff(): Promise<void> {
   const loc = ($("locationSelect") as HTMLSelectElement).value;
   G.theaterId = loc;
   G.difficulty = parseFloat(($("diffSelect") as HTMLSelectElement).value) || 1;
-  const gfx = (($("gfxSelect") as HTMLSelectElement | null)?.value || G.save.quality || "medium") as Quality;
+  const gfx = (($("gfxSelect") as HTMLSelectElement | null)?.value || G.save.quality || "high") as Quality;
   G.save.quality = gfx;
   G.quality = gfx;
   applyQuality(gfx);
@@ -238,7 +238,7 @@ function wireUi(): void {
 
   const gfxSel = $("gfxSelect") as HTMLSelectElement | null;
   if (gfxSel) {
-    gfxSel.value = G.save.quality || G.quality || "medium";
+    gfxSel.value = G.save.quality || G.quality || "high";
     gfxSel.addEventListener("change", () => {
       const q = gfxSel.value as Quality;
       G.save.quality = q;
@@ -346,6 +346,8 @@ async function boot(): Promise<void> {
           : key === "escort" || key === "vancouver"
             ? "vancouver"
             : "seoul";
+    G.quality = "high";
+    applyQuality("high");
     await startMission();
   }
 

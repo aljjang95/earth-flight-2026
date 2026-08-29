@@ -1,6 +1,6 @@
 import type { Craft, MissionKind, Rank, Theater, Weather } from "./types";
 
-export const VERSION = "5.1.0";
+export const VERSION = "5.2.0";
 export const TITLE = "EARTH FLIGHT";
 export const SUBTITLE = "ACE HORIZON · WORLD COMBAT";
 

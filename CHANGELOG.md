@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.2.0] - 2026-08-29
+### Changed
+- Globe lighting and water stay on (no more unlit olive ellipsoid). Adaptive FPS never auto-drops to **저**.
+- Esri imagery loads to zoom 19 with ancestor/sibling preload and a larger tile cache; chase camera looks down so city tiles fill the frame.
+- Default hangar GFX is **고**. Medium is now sharper than the old “high” SSE.
+- Fighter meshes are brighter with a color silhouette and engine glow; spawn altitude raised so Seoul/Nairobi streets are in shot.
+
 ## [5.1.0] - 2026-08-28
 ### Changed
 - Chase camera pulled back so the player jet, **GHOST-1 / GHOST-2**, and nearby bandits share the shot.

@@ -12,7 +12,8 @@ function esriLayer(): any {
   return new Cesium.ImageryLayer(
     new Cesium.UrlTemplateImageryProvider({
       url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      maximumLevel: 16,
+      maximumLevel: 19,
+      enablePickFeatures: false,
       credit: "Esri, Maxar, Earthstar Geographics",
     }),
   );
@@ -20,7 +21,7 @@ function esriLayer(): any {
 
 export async function initViewer(): Promise<void> {
   G.isMobile = isMobile();
-  G.quality = G.save.quality || "medium";
+  G.quality = G.save.quality || "high";
   const token = G.ionToken.trim();
   if (token) Cesium.Ion.defaultAccessToken = token;
 
@@ -37,9 +38,9 @@ export async function initViewer(): Promise<void> {
     selectionIndicator: false,
     creditContainer: document.getElementById("mapCredit") || document.createElement("div"),
     requestRenderMode: false,
-    targetFrameRate: 30,
+    targetFrameRate: 60,
     baseLayer: esriLayer(),
-    msaaSamples: 1,
+    msaaSamples: 4,
   };
 
   if (token) {
@@ -56,20 +57,36 @@ export async function initViewer(): Promise<void> {
   scene.globe.enableLighting = true;
   scene.globe.showGroundAtmosphere = true;
   try {
+    scene.globe.baseColor = Cesium.Color.fromCssColorString("#061018");
+  } catch {
+    /* */
+  }
+  try {
     scene.globe.showWaterEffect = true;
   } catch {
     /* water optional */
   }
-  scene.fog.enabled = true;
-  scene.fog.density = 0.00001;
-  scene.skyAtmosphere.brightnessShift = 0.16;
-  scene.skyAtmosphere.saturationShift = 0.1;
-  scene.globe.maximumScreenSpaceError = G.isMobile ? 2.8 : 1.6;
-  scene.globe.tileCacheSize = G.isMobile ? 500 : 900;
   try {
-    scene.globe.preloadAncestors = false;
-    scene.globe.preloadSiblings = false;
-    scene.globe.loadingDescendantLimit = 1;
+    scene.globe.atmosphereLightIntensity = 18;
+    scene.globe.dynamicAtmosphereLighting = true;
+  } catch {
+    /* atmosphere optional */
+  }
+  scene.fog.enabled = true;
+  scene.fog.density = 0.000006;
+  try {
+    scene.fog.minimumBrightness = 0.42;
+  } catch {
+    /* */
+  }
+  scene.skyAtmosphere.brightnessShift = 0.22;
+  scene.skyAtmosphere.saturationShift = 0.12;
+  scene.globe.maximumScreenSpaceError = G.isMobile ? 2.0 : 1.25;
+  scene.globe.tileCacheSize = G.isMobile ? 900 : 1800;
+  try {
+    scene.globe.preloadAncestors = true;
+    scene.globe.preloadSiblings = true;
+    scene.globe.loadingDescendantLimit = 12;
   } catch {
     /* */
   }
@@ -81,11 +98,11 @@ export async function initViewer(): Promise<void> {
   try {
     const bloom = scene.postProcessStages.bloom;
     bloom.enabled = false;
-    bloom.uniforms.contrast = 64;
-    bloom.uniforms.brightness = -0.2;
-    bloom.uniforms.delta = 0.8;
-    bloom.uniforms.sigma = 2.4;
-    bloom.uniforms.stepSize = 1.2;
+    bloom.uniforms.contrast = 92;
+    bloom.uniforms.brightness = -0.12;
+    bloom.uniforms.delta = 0.9;
+    bloom.uniforms.sigma = 2.6;
+    bloom.uniforms.stepSize = 1.1;
     scene.postProcessStages.fxaa.enabled = true;
   } catch {
     /* post optional */
@@ -107,10 +124,29 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
   G.quality = q;
   if (!G.viewer || G.viewer.isDestroyed()) return;
   const scene = G.viewer.scene;
-  scene.globe.maximumScreenSpaceError = q === "high" ? 2.0 : q === "medium" ? 2.8 : 4.2;
-  scene.fog.density = q === "low" ? 0.00002 : 0.00001;
+  const mobile = G.isMobile;
+  scene.globe.maximumScreenSpaceError =
+    q === "high" ? (mobile ? 1.55 : 1.12) : q === "medium" ? (mobile ? 1.9 : 1.48) : mobile ? 2.6 : 2.25;
   try {
-    scene.highDynamicRange = false;
+    G.viewer.targetFrameRate = q === "high" ? 60 : q === "medium" ? 50 : 30;
+  } catch {
+    /* */
+  }
+  try {
+    scene.msaaSamples = q === "high" ? 4 : q === "medium" ? 2 : 1;
+  } catch {
+    /* */
+  }
+  try {
+    scene.globe.tileCacheSize = q === "high" ? (mobile ? 1200 : 2200) : q === "medium" ? (mobile ? 900 : 1600) : 700;
+    scene.globe.preloadAncestors = true;
+    scene.globe.preloadSiblings = q !== "low";
+    scene.globe.loadingDescendantLimit = q === "high" ? 16 : q === "medium" ? 10 : 4;
+  } catch {
+    /* */
+  }
+  try {
+    scene.highDynamicRange = q === "high";
   } catch {
     /* */
   }
@@ -122,8 +158,10 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     /* */
   }
   try {
-    scene.globe.enableLighting = q !== "low";
-    scene.globe.showWaterEffect = q === "high";
+    // Lighting stays on at every preset — unlit ellipsoid is the olive-clay look.
+    scene.globe.enableLighting = true;
+    scene.globe.showWaterEffect = q !== "low";
+    scene.globe.showGroundAtmosphere = true;
   } catch {
     /* */
   }
@@ -135,6 +173,12 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     }
     G.clouds = null;
   }
+}
+
+/** Re-apply globe loaders after takeoff so city tiles fill the chase camera. */
+export function warmGlobe(): void {
+  if (!G.viewer || G.viewer.isDestroyed()) return;
+  applyQuality(G.quality);
 }
 
 export function applySolarNoon(lon: number, _lat: number, localHour = 12): void {
@@ -152,7 +196,7 @@ export function applySolarNoon(lon: number, _lat: number, localHour = 12): void 
     );
     G.viewer.clock.currentTime = Cesium.JulianDate.fromDate(solar);
     G.viewer.clock.shouldAnimate = false;
-    G.viewer.scene.globe.enableLighting = G.quality !== "low";
+    G.viewer.scene.globe.enableLighting = true;
   } catch {
     /* clock optional */
   }
@@ -165,10 +209,10 @@ export function applyTheaterMood(id: string): void {
   if (!G.viewer) return;
   try {
     const fog =
-      t.weather === "storm" ? 0.000032 : t.weather === "haze" ? 0.000018 : t.weather === "night" ? 0.000016 : 0.00001;
+      t.weather === "storm" ? 0.000012 : t.weather === "haze" ? 0.000008 : t.weather === "night" ? 0.000007 : 0.000005;
     G.viewer.scene.fog.density = fog;
-    G.viewer.scene.skyAtmosphere.brightnessShift = t.weather === "night" ? -0.12 : 0.14;
-    G.viewer.scene.skyAtmosphere.saturationShift = t.weather === "storm" ? -0.08 : 0.08;
+    G.viewer.scene.skyAtmosphere.brightnessShift = t.weather === "night" ? -0.06 : 0.2;
+    G.viewer.scene.skyAtmosphere.saturationShift = t.weather === "storm" ? -0.04 : 0.12;
   } catch {
     /* mood optional */
   }
@@ -182,7 +226,7 @@ async function tryPhotorealistic(): Promise<void> {
     ]);
     if (!G.viewer || G.viewer.isDestroyed()) return;
     G.viewer.scene.primitives.add(tileset);
-    tileset.maximumScreenSpaceError = G.isMobile ? 10 : 6;
+    tileset.maximumScreenSpaceError = G.isMobile ? 8 : 4;
     tileset.dynamicScreenSpaceError = true;
     G.tilesBackend = "photorealistic";
   } catch {
@@ -201,7 +245,7 @@ export function spawnClouds(lon: number, lat: number): void {
       }
     }
     const col = new Cesium.CloudCollection();
-    const n = G.quality === "high" ? 8 : G.quality === "medium" ? 4 : 0;
+    const n = G.quality === "high" ? 12 : G.quality === "medium" ? 7 : 0;
     for (let i = 0; i < n; i++) {
       const dlon = (Math.random() - 0.5) * 1.6;
       const dlat = (Math.random() - 0.5) * 1.2;

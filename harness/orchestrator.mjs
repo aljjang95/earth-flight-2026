@@ -64,6 +64,9 @@ check("credits", html.includes("creditsOverlay") && all.includes("showCredits"),
 check("sortie-card", html.includes("sortieCard") && all.includes("showSortieCard"), "sortie briefing card");
 check("ghost-pair", all.includes("GHOST-2") && all.includes("GHOST-1 / GHOST-2"), "visible two-ship wing");
 check("qa-missions", all.includes('key === "strike"') && all.includes('"nairobi"'), "qa=strike/defend/escort boot");
+check("globe-lit", all.includes("scene.globe.enableLighting = true") && !all.includes('enableLighting = q !== "low"'), "globe lighting stays on");
+check("no-auto-low", !all.includes('applyQuality("low")'), "fps adapter never applies low");
+check("city-tiles", all.includes("preloadAncestors = true") && all.includes("maximumLevel: 19"), "Esri city zoom + ancestor preload");
 
 const pass = findings.every((f) => f.ok);
 const report = {
