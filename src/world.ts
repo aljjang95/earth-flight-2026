@@ -40,7 +40,7 @@ export async function initViewer(): Promise<void> {
     requestRenderMode: false,
     targetFrameRate: 60,
     baseLayer: esriLayer(),
-    msaaSamples: 4,
+    msaaSamples: 1,
   };
 
   if (token) {
@@ -67,7 +67,7 @@ export async function initViewer(): Promise<void> {
     /* water optional */
   }
   try {
-    scene.globe.atmosphereLightIntensity = 18;
+    scene.globe.atmosphereLightIntensity = 10;
     scene.globe.dynamicAtmosphereLighting = true;
   } catch {
     /* atmosphere optional */
@@ -118,6 +118,7 @@ export async function initViewer(): Promise<void> {
   if (token) void tryPhotorealistic();
   spawnClouds(theaterById("seoul").lon, theaterById("seoul").lat);
   applyQuality(G.quality);
+  await waitForGlobe(2800);
 }
 
 export function applyQuality(q: "high" | "medium" | "low"): void {
@@ -133,7 +134,7 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     /* */
   }
   try {
-    scene.msaaSamples = q === "high" ? 4 : q === "medium" ? 2 : 1;
+    scene.msaaSamples = 1;
   } catch {
     /* */
   }
@@ -161,7 +162,12 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     // Lighting stays on at every preset — unlit ellipsoid is the olive-clay look.
     scene.globe.enableLighting = true;
     scene.globe.showWaterEffect = q !== "low";
-    scene.globe.showGroundAtmosphere = true;
+    scene.globe.showGroundAtmosphere = !G.flying;
+  } catch {
+    /* */
+  }
+  try {
+    scene.fog.enabled = !G.flying;
   } catch {
     /* */
   }
@@ -173,6 +179,40 @@ export function applyQuality(q: "high" | "medium" | "low"): void {
     }
     G.clouds = null;
   }
+}
+
+/** Close-range combat: drop ground haze so Esri city tiles are not olive soup. */
+export function setNearCameraVisuals(near: boolean): void {
+  if (!G.viewer || G.viewer.isDestroyed()) return;
+  const scene = G.viewer.scene;
+  try {
+    scene.globe.showGroundAtmosphere = !near;
+    scene.fog.enabled = !near;
+  } catch {
+    /* */
+  }
+}
+
+export function waitForGlobe(ms = 2800): Promise<void> {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const tick = () => {
+      try {
+        if (G.viewer && !G.viewer.isDestroyed() && G.viewer.scene.globe.tilesLoaded) {
+          resolve();
+          return;
+        }
+      } catch {
+        /* */
+      }
+      if (performance.now() - t0 > ms) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
 }
 
 /** Re-apply globe loaders after takeoff so city tiles fill the chase camera. */

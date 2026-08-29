@@ -66,7 +66,8 @@ check("ghost-pair", all.includes("GHOST-2") && all.includes("GHOST-1 / GHOST-2")
 check("qa-missions", all.includes('key === "strike"') && all.includes('"nairobi"'), "qa=strike/defend/escort boot");
 check("globe-lit", all.includes("scene.globe.enableLighting = true") && !all.includes('enableLighting = q !== "low"'), "globe lighting stays on");
 check("no-auto-low", !all.includes('applyQuality("low")'), "fps adapter never applies low");
-check("city-intro", all.includes("introLook") && all.includes("alt + 520"), "takeoff look-down loads city tiles");
+check("city-tiles", all.includes("preloadAncestors = true") && all.includes("maximumLevel: 19"), "Esri city zoom + ancestor preload");
+check("city-intro", all.includes("introLook") && all.includes("alt + 520") && all.includes("setNearCameraVisuals"), "takeoff look-down loads city tiles");
 
 const pass = findings.every((f) => f.ok);
 const report = {

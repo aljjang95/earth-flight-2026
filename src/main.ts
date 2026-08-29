@@ -2,7 +2,7 @@ import "./styles.css";
 import { CAMPAIGN, CRAFTS, MISSION_KO, SUBTITLE, THEATERS, TITLE, VERSION, theaterById, theaterBrief } from "./config";
 import { G } from "./state";
 import { audio } from "./audio";
-import { applyQuality, initViewer, locationOptionsHtml, lookAtTheater, resizeViewer } from "./world";
+import { applyQuality, initViewer, locationOptionsHtml, lookAtTheater, resizeViewer, waitForGlobe } from "./world";
 import type { Quality } from "./types";
 import { bindHud } from "./hud";
 import { bindGameKeys, exposeAceApi, returnToBase, startLoop, startMission } from "./game";
@@ -331,6 +331,7 @@ async function boot(): Promise<void> {
   wireUi();
   audio.installUnlock();
   startLoop();
+  await waitForGlobe(3200);
 
   const params = new URLSearchParams(location.search);
   const qa = params.has("qa") || params.has("harness");
@@ -348,6 +349,7 @@ async function boot(): Promise<void> {
             : "seoul";
     G.quality = "high";
     applyQuality("high");
+    await waitForGlobe(2000);
     await startMission();
   }
 

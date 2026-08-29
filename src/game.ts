@@ -7,7 +7,7 @@ import { clearCombatEntities, spawnPlayerCraft, spawnWave, spawnWingman, updateC
 import { drawHud } from "./hud";
 import { tickHarness } from "./harness-client";
 import { bindInput, input } from "./input";
-import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater, warmGlobe } from "./world";
+import { applyTheaterMood, lookAtTheater, spawnClouds, syncHangarTheater, warmGlobe, setNearCameraVisuals } from "./world";
 import { writeSave } from "./save";
 import { ensurePointCollection } from "./fx";
 import { maybeStartTutorial, takePhoto } from "./tutorial";
@@ -30,7 +30,7 @@ export function startLoop(): void {
     if (!G.paused && !G.gameOver && !G.transiting) {
       updateFlight(dt);
       if (G.mode !== "free") updateCombat(dt);
-      if (G.introLook > 0) G.introLook = Math.max(0, G.introLook - dt);
+      if (G.introLook > 0 && G.fps >= 5) G.introLook = Math.max(0, G.introLook - dt);
     }
     updateCamera();
     drawHud();
@@ -76,15 +76,17 @@ export async function startMission(): Promise<void> {
   G.player.speed = 155;
   G.player.throttle = 0.74;
   resetCombatStats();
-  G.introLook = 2.5;
+  G.introLook = 4.2;
   warmGlobe();
   applyTheaterMood(t.id);
   spawnClouds(t.lon, t.lat);
+  setNearCameraVisuals(true);
   spawnPlayerCraft();
   if (G.mode !== "free") spawnWingman();
   ensurePointCollection();
   G.flying = true;
   G.menuOrbit = false;
+  setNearCameraVisuals(true);
   G.cam = G.mode === "free" ? "first" : "third";
   const camBtn = document.getElementById("cameraModeBtn");
   if (camBtn) camBtn.textContent = G.cam === "first" ? "3인칭" : "1인칭";
@@ -147,6 +149,7 @@ export function returnToBase(): void {
   G.gameOver = false;
   G.menuOrbit = true;
   G.introLook = 0;
+  setNearCameraVisuals(false);
   clearCombatEntities();
   document.getElementById("pauseMenu")!.style.display = "none";
   document.getElementById("gameOver")!.style.display = "none";

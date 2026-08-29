@@ -39,7 +39,7 @@ export function updateCamera(): void {
 
   if (G.introLook > 0 && G.cam !== "first") {
     G.playerEntity.show = true;
-    const k = Math.min(1, G.introLook / 2.5);
+    const k = Math.min(1, G.introLook / 4.2);
     const dest = Cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.alt + 520 + k * 3800);
     const pitch = Cesium.Math.toRadians(-78 + (1 - k) * 32);
     if (frustum.fov != null) frustum.fov = Cesium.Math.toRadians(62);
@@ -79,15 +79,15 @@ export function updateCamera(): void {
     if (frustum.fov != null) frustum.fov = Cesium.Math.toRadians(64 + (G.boostMul > 1.1 ? 4 : 0));
     frustum.near = 0.8;
     const camRoll = p.roll * 0.32;
-    const camPitch = Math.max(-0.52, Math.min(0.02, p.pitch * 0.14 - 0.38));
+    const camPitch = Math.max(-0.72, Math.min(-0.12, p.pitch * 0.12 - 0.58));
     const frame = Cesium.Transforms.headingPitchRollToFixedFrame(
       pos,
       new Cesium.HeadingPitchRoll(p.heading, camPitch, camRoll),
     );
-    const dist = G.mode === "free" ? 110 : 128;
-    const height = G.mode === "free" ? 38 : 48;
-    const eye = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(-dist, 6, height), new Cesium.Cartesian3());
-    const lookAt = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(28, 0, -26), new Cesium.Cartesian3());
+    const dist = G.mode === "free" ? 120 : 145;
+    const height = G.mode === "free" ? 52 : 62;
+    const eye = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(-dist, 4, height), new Cesium.Cartesian3());
+    const lookAt = Cesium.Matrix4.multiplyByPoint(frame, new Cesium.Cartesian3(36, 0, -52), new Cesium.Cartesian3());
     const dir = Cesium.Cartesian3.subtract(lookAt, eye, new Cesium.Cartesian3());
     Cesium.Cartesian3.normalize(dir, dir);
     const up = Cesium.Matrix4.multiplyByPointAsVector(frame, Cesium.Cartesian3.UNIT_Z, new Cesium.Cartesian3());
