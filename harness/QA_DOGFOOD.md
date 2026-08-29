@@ -99,10 +99,10 @@ Remaining non-blockers: photorealistic 3D cities still need an optional Cesium i
 
 | Check | Result |
 | --- | --- |
-| Chase cam pulled back; GHOST-1/2 in shot | (dogfood) |
-| Sortie card on takeoff | (dogfood) |
-| Hangar chips show 요격/타격/엄호/방어 | (dogfood) |
-| `/?qa=strike` Nairobi sites | (dogfood) |
+| Hangar **v5.1.0** | PASS |
+| Chase cam pulled back; **GHOST-1 / GHOST-2** labeled in shot | PASS (`/?qa=1` Seoul) |
+| `/?qa=strike` Nairobi | PASS (나이로비 · 동아프리카 CLEAR) |
+| Orchestrator 30 checks | PASS |
 
 
 | Check | Result |
