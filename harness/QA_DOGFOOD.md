@@ -95,6 +95,16 @@ Remaining non-blockers: photorealistic 3D cities still need an optional Cesium i
 | Strike / defend / escort briefs | PASS on hangar chips |
 | Hangar MEDAL counter | PASS |
 
+## v5.2.0 visual quality (play, not a number bump)
+
+| Check | Result |
+| --- | --- |
+| Hangar **v5.2.0**, GFX **고 (품질)** | PASS |
+| `/?qa=1` Seoul satellite city under the jet (not olive ellipsoid) | PASS |
+| HUD **ESRI · HIGH** and does not auto-drop to LOW | PASS |
+| GHOST-1 / GHOST-2 labels in the look-down / chase | PASS |
+| Orchestrator 34 checks (`globe-lit`, `no-auto-low`, `city-tiles`, `city-intro`) | PASS |
+
 ## v5.1.0 release update (play, not a number bump)
 
 | Check | Result |
