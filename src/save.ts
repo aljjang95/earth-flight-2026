@@ -38,7 +38,7 @@ export function loadSave(): SaveData {
     }
     const base = empty();
     const owned = Array.isArray(raw.owned) && raw.owned.length ? (raw.owned as string[]) : ["sparrow"];
-    return {
+    const data: SaveData = {
       gold: Math.max(0, Number(raw.gold) || base.gold),
       xp: Math.max(0, Number(raw.xp) || 0),
       level: Math.max(1, Number(raw.level) || 1),
@@ -54,6 +54,18 @@ export function loadSave(): SaveData {
       tutorialDone: !!raw.tutorialDone,
       medals: Array.isArray(raw.medals) ? (raw.medals as string[]) : [],
     };
+    try {
+      if (!localStorage.getItem("earth-flight-gfx-v52")) {
+        localStorage.setItem("earth-flight-gfx-v52", "1");
+        if (data.quality === "medium") {
+          data.quality = "high";
+          localStorage.setItem(KEY, JSON.stringify(data));
+        }
+      }
+    } catch {
+      /* */
+    }
+    return data;
   } catch {
     return empty();
   }
