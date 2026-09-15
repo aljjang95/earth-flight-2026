@@ -40,6 +40,10 @@ A/D · W/S · Space · M · F · 1 · P · C · virtual stick / mouse drag
 
 1.3.4 ← 1.3.3 ← 1.3.2 ← …
 
+## Design
+
+World-class GDD (Korean): see [`prd/README.md`](prd/README.md). Horizon 1.0 is **Ace Combat over the real Earth** — your city is the stage. This folder is the design source of truth; v1.3.4 is the current playable build.
+
 ## License
 
 MIT
